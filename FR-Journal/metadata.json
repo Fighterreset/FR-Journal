@@ -1,0 +1,5 @@
+{
+  "name": "Fighter Reset Diary",
+  "description": "A comprehensive 8-week fitness and lifestyle self-monitoring application based on the Fighter Reset program. Track workouts, nutrition, sleep, and the 10-3-2-1-0 rule with local persistence and data visualization.",
+  "requestFramePermissions": []
+}
