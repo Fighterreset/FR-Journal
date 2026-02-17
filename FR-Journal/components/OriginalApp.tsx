@@ -10,6 +10,26 @@ import { loadUserState, saveUserState } from "../lib/userState";
 import { supabase } from "../lib/supabase";
 import CoachDashboard from "./CoachDashboard";
 
+// --- IKONOK (SVG) ---
+const DownloadIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+);
+const UploadIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+);
+const LogOutIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+);
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+);
+const ArrowRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+);
+const CoachIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+);
+
 type Props = {
   userId: string;
 };
@@ -179,16 +199,24 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
     await supabase.auth.signOut();
   };
 
+  // Modern Loading Screen
   if (!ready) {
-    return <div className="min-h-screen bg-[#0f0f0f] text-white p-6">Betöltés…</div>;
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+         <div className="flex flex-col items-center gap-4">
+             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+             <p className="text-gray-500 text-sm animate-pulse">Adatok betöltése...</p>
+         </div>
+      </div>
+    );
   }
 
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-[#0f0f0f]">
+      <div className="min-h-screen flex flex-col bg-[#0a0a0a] font-sans text-gray-200 selection:bg-red-500/30">
         <Header />
 
-        <main className="flex-grow container mx-auto px-4 py-6 max-w-7xl">
+        <main className="flex-grow container mx-auto px-4 py-8 max-w-7xl space-y-12">
           <Routes>
             {/* ✅ Edzői route csak adminnak */}
             {isAdmin && <Route path="/coach" element={<CoachDashboard />} />}
@@ -196,90 +224,139 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
             <Route
               path="/"
               element={
-                <div className="space-y-8">
+                <div className="space-y-10 animate-in fade-in duration-500">
                   <RuleInfo />
 
-                  {/* ✅ Edzői gomb a főoldal tetején (csak admin) */}
+                  {/* ✅ Edzői gomb (csak admin) - Prémium stílus */}
                   {isAdmin && (
-                    <div>
+                    <div className="flex justify-end">
                       <Link
                         to="/coach"
-                        className="inline-block px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg text-sm font-bold"
+                        className="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-900 to-red-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-900/20 hover:shadow-red-600/40 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
                       >
-                        Edzői felület
+                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                         <CoachIcon />
+                         Edzői felület
                       </Link>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {state.weeks.map((week) => (
-                      <Link
-                        key={week.weekNumber}
-                        to={`/week/${week.weekNumber}`}
-                        className="group p-6 bg-[#1a1a1a] border-l-4 border-red-700 hover:bg-[#252525] transition-all rounded-r-lg flex items-center justify-between shadow-lg"
-                      >
-                        <div>
-                          <h3 className="text-xl font-bold text-white group-hover:text-red-500">
-                            {week.weekNumber}. hét
-                          </h3>
-                          <p className="text-gray-400 text-sm">Self-check napló töltése</p>
-                        </div>
-                        <span className="text-red-600 font-bold text-2xl">→</span>
-                      </Link>
-                    ))}
+                  {/* HETEK GRID */}
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-400 mb-6 flex items-center gap-2">
+                       <span className="w-1 h-6 bg-red-600 rounded-full"></span>
+                       Napló bejegyzések
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                      {state.weeks.map((week) => (
+                        <Link
+                          key={week.weekNumber}
+                          to={`/week/${week.weekNumber}`}
+                          className="group relative overflow-hidden bg-[#111] border border-white/5 rounded-2xl p-6 transition-all duration-300 hover:border-red-500/50 hover:shadow-[0_0_20px_rgba(220,38,38,0.1)] hover:-translate-y-1"
+                        >
+                          {/* Dekoratív háttérszám */}
+                          <div className="absolute -right-4 -top-6 text-[100px] font-black text-white/[0.02] group-hover:text-red-600/[0.05] transition-colors select-none pointer-events-none">
+                            {week.weekNumber}
+                          </div>
+
+                          <div className="relative z-10 flex flex-col h-full justify-between">
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className="text-xl font-bold text-white group-hover:text-red-500 transition-colors">
+                                  {week.weekNumber}. hét
+                                </h3>
+                                <div className="text-gray-600 group-hover:text-red-500 group-hover:translate-x-1 transition-all duration-300">
+                                   <ArrowRightIcon />
+                                </div>
+                              </div>
+                              <p className="text-gray-500 text-xs font-medium uppercase tracking-wide">
+                                Self-check napló
+                              </p>
+                            </div>
+                            
+                            {/* Opcionális: Progress bar placeholder, ha később lenne adat */}
+                            <div className="w-full h-1 bg-[#222] rounded-full mt-6 overflow-hidden">
+                               <div className="h-full bg-red-600 w-0 group-hover:w-full transition-all duration-700 ease-out opacity-50"></div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="mt-12">
+                    <h2 className="text-xl font-bold text-gray-400 mb-6 flex items-center gap-2">
+                       <span className="w-1 h-6 bg-gray-600 rounded-full"></span>
+                       Összesítés
+                    </h2>
                     <ProgressDashboard weeks={state.weeks} />
                   </div>
 
-                  <div className="mt-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#1a1a1a] p-4 rounded-xl border border-[#252525]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-bold text-gray-400 uppercase">
-                        Adatok a fiókodban tárolva
-                      </span>
-                      {lastSaved && (
-                        <span className="text-[10px] text-gray-600 italic">Utolsó mentés: {lastSaved}</span>
-                      )}
-                    </div>
+                  {/* VEZÉRLŐPULT (Control Panel) */}
+                  <div className="mt-16 bg-[#111] border border-white/5 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-900/20 to-transparent"></div>
+                    
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                      
+                      {/* Állapotjelző */}
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <div className="absolute top-0 left-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
+                        </div>
+                        <div>
+                          <span className="block text-sm font-bold text-gray-300 uppercase tracking-wide">
+                            Fiók Szinkronizálva
+                          </span>
+                          {lastSaved && (
+                            <span className="text-xs text-gray-500 font-mono">
+                              Utolsó mentés: {lastSaved}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                    <div className="flex gap-3 flex-wrap">
-                      <button
-                        onClick={exportData}
-                        className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs font-bold rounded-lg transition-colors border border-[#333] flex items-center gap-2"
-                      >
-                        📁 Exportálás
-                      </button>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs font-bold rounded-lg transition-colors border border-[#333] flex items-center gap-2"
-                      >
-                        📤 Importálás
-                      </button>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={importData}
-                        className="hidden"
-                        accept=".json"
-                      />
-                      <button
-                        onClick={logout}
-                        className="px-3 py-1.5 bg-[#252525] hover:bg-[#333] text-white text-xs font-bold rounded-lg transition-colors border border-[#333]"
-                      >
-                        Kijelentkezés
-                      </button>
-                    </div>
-                  </div>
+                      {/* Gombok Csoportja */}
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={exportData}
+                          className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#252525] hover:text-white text-gray-400 text-sm font-bold rounded-xl transition-all border border-white/5 hover:border-white/10 flex items-center gap-2"
+                        >
+                          <DownloadIcon /> Exportálás
+                        </button>
+                        
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-4 py-2 bg-[#1a1a1a] hover:bg-[#252525] hover:text-white text-gray-400 text-sm font-bold rounded-xl transition-all border border-white/5 hover:border-white/10 flex items-center gap-2"
+                        >
+                          <UploadIcon /> Importálás
+                        </button>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={importData}
+                          className="hidden"
+                          accept=".json"
+                        />
+                        
+                        <div className="w-px h-8 bg-white/10 mx-1 hidden md:block"></div>
 
-                  <div className="flex justify-center pt-4">
-                    <button
-                      onClick={resetData}
-                      className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-red-500 transition-colors"
-                    >
-                      Minden adat törlése (Alaphelyzet)
-                    </button>
+                        <button
+                          onClick={resetData}
+                          className="px-4 py-2 bg-[#1a0505] hover:bg-red-900/20 text-red-500 hover:text-red-400 text-sm font-bold rounded-xl transition-all border border-red-900/20 flex items-center gap-2"
+                        >
+                          <TrashIcon /> Reset
+                        </button>
+
+                        <button
+                          onClick={logout}
+                          className="px-4 py-2 bg-[#252525] hover:bg-white text-white hover:text-black text-sm font-bold rounded-xl transition-colors border border-transparent shadow-lg flex items-center gap-2"
+                        >
+                          <LogOutIcon /> Kilépés
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               }
@@ -289,9 +366,9 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
           </Routes>
         </main>
 
-        <footer className="py-8 bg-[#0a0a0a] text-center text-gray-500 text-sm border-t border-[#1a1a1a]">
-          <p>© 2025 Fighter Reset</p>
-          <p className="mt-1">Minden jog fenntartva</p>
+        <footer className="py-10 bg-[#050505] text-center border-t border-white/5">
+          <p className="text-gray-500 text-sm font-medium">© 2025 Fighter Reset Program</p>
+          <p className="text-xs text-gray-600 mt-2">Minden jog fenntartva.</p>
         </footer>
       </div>
     </Router>
