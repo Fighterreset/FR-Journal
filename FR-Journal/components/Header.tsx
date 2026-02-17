@@ -13,7 +13,7 @@ const Header: React.FC = () => {
           {/* Logo container - A logó most már a teljes márkajelzést tartalmazza */}
           <div className="relative h-14 sm:h-16 flex items-center">
              <img 
-               src="logo.png" 
+               src="https://fighterreset.hu/wp-content/uploads/2025/10/fighterreset-logo.png" 
                alt="Fighter Reset" 
                className="h-full w-auto object-contain"
                onError={(e) => {
