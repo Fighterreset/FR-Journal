@@ -15,7 +15,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-[#1a1a1a] border border-[#252525] rounded-2xl p-6 shadow-xl">
-        <h1 className="text-2xl font-bold  text-red">Fighter Reset - Journal </h1>
+        <h1 className="text-2xl font-bold  text-red-500">Fighter Reset - Journal </h1>
         <p className="text-gray-400 text-sm mt-1">
           Jelentkezz be a tőlem kapott adatokkal.
         </p>
