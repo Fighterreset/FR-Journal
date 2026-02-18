@@ -1,300 +1,169 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { WeekData, DayData, TenThreeTwoOneZeroRule } from '../types';
+import React from 'react';
 
 // --- Ikonok ---
-const ChevronLeftIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>);
-const ChevronRightIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>);
-const CheckIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>);
-const BackIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
-const InfoIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
+const InfoIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+);
+const DumbbellIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
+);
+const StarIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+);
+const PillIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+);
+const WaterSleepIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+);
 
-interface WeeklyLogProps {
-  weeks: WeekData[];
-  onUpdate: (weekNum: number, dayId: string, updates: Partial<DayData>) => void;
-}
-
-const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
-  const { weekNum } = useParams<{ weekNum: string }>();
-  const navigate = useNavigate();
-  const currentWeekNum = parseInt(weekNum || '1');
-  const weekData = weeks.find(w => w.weekNumber === currentWeekNum);
-
-  const [activeDayEdit, setActiveDayEdit] = useState<string | null>(null);
-
-  if (!weekData) {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-gray-400">
-            <p className="text-xl font-bold">A keresett hét nem található.</p>
-            <button onClick={() => navigate('/')} className="mt-4 text-red-500 hover:text-red-400 underline">Vissza a főoldalra</button>
-        </div>
-    );
-  }
-
-  const handleRuleToggle = (day: DayData, ruleKey: keyof TenThreeTwoOneZeroRule) => {
-    onUpdate(currentWeekNum, day.id, {
-      rule103210: {
-        ...day.rule103210,
-        [ruleKey]: !day.rule103210[ruleKey]
-      }
-    });
-  };
-
-  const getRuleScore = (rule: TenThreeTwoOneZeroRule) => {
-    let score = 0;
-    if (rule.caffeine) score++;
-    if (rule.meal) score++;
-    if (rule.fluids) score++;
-    if (rule.screens) score++;
-    if (rule.snooze) score++;
-    return score;
-  };
-
+const RuleInfo: React.FC = () => {
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="relative bg-[#111] text-gray-200 rounded-3xl border border-white/5 shadow-2xl overflow-hidden group">
       
-      {/* --- HEADER --- */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#111] border border-white/5 p-4 rounded-2xl shadow-lg">
-        <button 
-          onClick={() => navigate('/')}
-          className="text-gray-400 hover:text-white flex items-center gap-2 text-sm font-bold transition-colors group px-3 py-2 rounded-lg hover:bg-white/5"
-        >
-          <div className="group-hover:-translate-x-1 transition-transform"><BackIcon /></div>
-          Vissza
-        </button>
+      {/* Dekoratív háttér effekt */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-        <div className="text-center">
-             <h2 className="text-3xl font-black italic uppercase tracking-wider text-white">
-                {currentWeekNum}. <span className="text-red-600">Hét</span>
-             </h2>
-             <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-medium">Napló kitöltése</p>
+      <div className="p-6 md:p-8">
+        
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-4">
+          <div className="p-2 bg-red-500/10 text-red-500 rounded-lg">
+             <InfoIcon />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white uppercase tracking-wide">
+              Jelmagyarázat & Szabályok
+            </h2>
+            <p className="text-xs text-gray-500 font-medium mt-1">
+              Útmutató a napló helyes kitöltéséhez
+            </p>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <button 
-             onClick={() => currentWeekNum > 1 && navigate(`/week/${currentWeekNum - 1}`)} 
-             disabled={currentWeekNum <= 1}
-             className="p-3 bg-[#1a1a1a] rounded-xl hover:bg-[#252525] disabled:opacity-30 disabled:cursor-not-allowed border border-white/5 transition-all active:scale-95"
-          >
-             <ChevronLeftIcon />
-          </button>
-          <button 
-             onClick={() => currentWeekNum < 8 && navigate(`/week/${currentWeekNum + 1}`)} 
-             disabled={currentWeekNum >= 8}
-             className="p-3 bg-[#1a1a1a] rounded-xl hover:bg-[#252525] disabled:opacity-30 disabled:cursor-not-allowed border border-white/5 transition-all active:scale-95"
-          >
-             <ChevronRightIcon />
-          </button>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          
+          {/* BAL OLDAL: Jelmagyarázat */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+              Hogyan töltsd?
+            </h3>
+            
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
+               <div className="mt-1 p-2 bg-[#252525] rounded-lg text-red-500"><DumbbellIcon /></div>
+               <div>
+                 <span className="block font-bold text-white text-sm mb-1">Edzés</span>
+                 <p className="text-xs text-gray-400 leading-relaxed">
+                   Jelöld be a pipát (checkbox), ha aznap elvégezted az előírt edzésmunkát.
+                 </p>
+               </div>
+            </div>
+
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
+               <div className="mt-1 p-2 bg-[#252525] rounded-lg text-yellow-500"><StarIcon /></div>
+               <div>
+                 <span className="block font-bold text-white text-sm mb-1">Étkezés</span>
+                 <p className="text-xs text-gray-400 leading-relaxed">
+                   Értékeld a napodat 1-től 5-ig. <br/>
+                   <span className="text-[10px] opacity-70">(1 = Csaló nap/Rossz, 5 = Tiszta étkezés/Tökéletes)</span>
+                 </p>
+               </div>
+            </div>
+
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
+               <div className="mt-1 p-2 bg-[#252525] rounded-lg text-purple-500"><PillIcon /></div>
+               <div>
+                 <span className="block font-bold text-white text-sm mb-1">Kiegészítők</span>
+                 <p className="text-xs text-gray-400 leading-relaxed">
+                   Jelöld be, ha bevetted a napi vitaminokat és táplálékkiegészítőket.
+                 </p>
+               </div>
+            </div>
+
+            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
+               <div className="mt-1 p-2 bg-[#252525] rounded-lg text-cyan-500"><WaterSleepIcon /></div>
+               <div>
+                 <span className="block font-bold text-white text-sm mb-1">Víz & Alvás</span>
+                 <p className="text-xs text-gray-400 leading-relaxed">
+                   Írd be a pontos mennyiséget számmal (pl. 3 liter víz, 7.5 óra alvás).
+                 </p>
+               </div>
+            </div>
+          </div>
+
+          {/* JOBB OLDAL: 10-3-2-1-0 Szabály */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-transparent rounded-2xl blur-xl"></div>
+            
+            <div className="relative bg-[#0f0f0f] border border-red-900/30 rounded-2xl p-6 h-full shadow-inner shadow-red-900/10">
+              <h3 className="flex items-center gap-2 font-black text-white text-sm uppercase tracking-wider mb-6 pb-4 border-b border-red-900/20">
+                <span className="flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                </span>
+                10-3-2-1-0 Szabály
+              </h3>
+
+              <div className="space-y-6">
+                
+                <div className="flex items-center gap-4 group/item">
+                  <span className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-[#1a1a1a] border border-red-900/20 rounded-xl text-2xl font-black text-white group-hover/item:bg-red-900/20 group-hover/item:scale-110 transition-all duration-300">
+                    10
+                  </span>
+                  <div>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Koffein stop</span>
+                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs koffein.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 group/item">
+                  <span className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-[#1a1a1a] border border-red-900/20 rounded-xl text-2xl font-black text-white group-hover/item:bg-red-900/20 group-hover/item:scale-110 transition-all duration-300">
+                    3
+                  </span>
+                  <div>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Kaja stop</span>
+                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs nagy étkezés.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 group/item">
+                  <span className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-[#1a1a1a] border border-red-900/20 rounded-xl text-2xl font-black text-white group-hover/item:bg-red-900/20 group-hover/item:scale-110 transition-all duration-300">
+                    2
+                  </span>
+                  <div>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Folyadék stop</span>
+                    <p className="text-sm text-gray-300">órával lefekvés előtt csökkentsd a folyadékot.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 group/item">
+                  <span className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-[#1a1a1a] border border-red-900/20 rounded-xl text-2xl font-black text-white group-hover/item:bg-red-900/20 group-hover/item:scale-110 transition-all duration-300">
+                    1
+                  </span>
+                  <div>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Képernyő stop</span>
+                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs telefon/TV.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 group/item">
+                  <span className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-[#1a1a1a] border border-red-900/20 rounded-xl text-2xl font-black text-white group-hover/item:bg-red-900/20 group-hover/item:scale-110 transition-all duration-300">
+                    0
+                  </span>
+                  <div>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Szundi stop</span>
+                    <p className="text-sm text-gray-300">szundigomb reggel. Ébredj azonnal!</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
-
-      {/* --- TABLE WRAPPER --- */}
-      <div className="relative rounded-2xl border border-white/5 bg-[#111] shadow-2xl overflow-hidden">
-        {/* Dekoratív felső sáv */}
-        <div className="h-1 w-full bg-gradient-to-r from-red-900 via-red-600 to-red-900"></div>
-
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse min-w-[1200px]">
-            <thead>
-              <tr className="bg-[#161616] text-gray-400 text-[11px] font-bold uppercase tracking-widest border-b border-white/10">
-                <th className="p-4 sticky left-0 bg-[#161616] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.5)] w-32">Nap</th>
-                <th className="p-4 text-center w-24">Edzés</th>
-                <th className="p-4 text-center w-28">Étkezés <span className="text-[9px] opacity-50">(1-5)</span></th>
-                <th className="p-4 text-center w-24">Kieg.</th>
-                <th className="p-4 text-center w-28">Víz <span className="text-[9px] opacity-50">(L)</span></th>
-                <th className="p-4 text-center w-28">Alvás <span className="text-[9px] opacity-50">(h)</span></th>
-                <th className="p-4 text-center w-40">10-3-2-1-0</th>
-                <th className="p-4 text-center w-28">Éhség <span className="text-[9px] opacity-50">(1-5)</span></th>
-                <th className="p-4 text-center w-28">Közérzet <span className="text-[9px] opacity-50">(1-5)</span></th>
-                <th className="p-4 min-w-[200px]">Megjegyzés</th>
-              </tr>
-            </thead>
-            <tbody>
-              {weekData.days.map((day, index) => (
-                <tr 
-                    key={day.id} 
-                    className={`group transition-colors h-16 border-b border-white/5 hover:bg-white/[0.02] ${index % 2 === 0 ? 'bg-[#111]' : 'bg-[#131313]'}`}
-                >
-                  {/* NAP NEVE (Sticky) */}
-                  <td className="p-4 font-bold text-sm text-white sticky left-0 z-10 border-r border-white/5 bg-inherit group-hover:bg-[#1a1a1a] shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
-                    <div className="flex flex-col">
-                        <span>{day.dayName}</span>
-                        <span className="text-[9px] text-gray-600 font-mono font-normal">DAY {index + 1}</span>
-                    </div>
-                  </td>
-                  
-                  {/* WORKOUT */}
-                  <td className="p-2 text-center border-r border-white/5">
-                     <button 
-                       onClick={() => onUpdate(currentWeekNum, day.id, { workout: !day.workout })}
-                       className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all duration-300 ${
-                           day.workout 
-                           ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.5)] scale-100' 
-                           : 'bg-[#1a1a1a] text-gray-600 border border-white/10 hover:border-red-500/50 hover:text-red-500'
-                       }`}
-                     >
-                       {day.workout ? <CheckIcon /> : <span className="w-2 h-2 rounded-full bg-current opacity-20"></span>}
-                     </button>
-                  </td>
-
-                  {/* NUTRITION */}
-                  <td className="p-2 border-r border-white/5">
-                    <div className="relative">
-                        <select 
-                          value={day.nutrition}
-                          onChange={(e) => onUpdate(currentWeekNum, day.id, { nutrition: Number(e.target.value) })}
-                          className={`w-full bg-transparent text-center font-bold text-sm appearance-none cursor-pointer py-2 rounded focus:bg-[#222] focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors ${
-                              day.nutrition >= 4 ? 'text-green-400' : day.nutrition === 0 ? 'text-gray-700' : 'text-yellow-500'
-                          }`}
-                        >
-                          <option value={0} className="bg-[#111] text-gray-500">-</option>
-                          {[1,2,3,4,5].map(v => <option key={v} value={v} className="bg-[#111] text-white">{v}</option>)}
-                        </select>
-                        {/* Custom Arrow overlay could go here, but appearance-none removes default */}
-                    </div>
-                  </td>
-
-                  {/* SUPPLEMENTS */}
-                  <td className="p-2 text-center border-r border-white/5">
-                     <button 
-                       onClick={() => onUpdate(currentWeekNum, day.id, { supplements: !day.supplements })}
-                       className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all duration-300 ${
-                           day.supplements 
-                           ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)] scale-100' 
-                           : 'bg-[#1a1a1a] text-gray-600 border border-white/10 hover:border-blue-500/50 hover:text-blue-500'
-                       }`}
-                     >
-                       {day.supplements ? <CheckIcon /> : <span className="w-2 h-2 rounded-full bg-current opacity-20"></span>}
-                     </button>
-                  </td>
-
-                  {/* WATER */}
-                  <td className="p-2 border-r border-white/5">
-                    <input 
-                      type="number" step="0.1" min="0" placeholder="-"
-                      value={day.water === 0 ? '' : day.water}
-                      onChange={(e) => onUpdate(currentWeekNum, day.id, { water: e.target.value === '' ? 0 : Number(e.target.value) })}
-                      className="w-full bg-transparent text-center text-cyan-400 font-bold focus:outline-none focus:bg-[#222] rounded py-1 placeholder-gray-700"
-                    />
-                  </td>
-
-                  {/* SLEEP */}
-                  <td className="p-2 border-r border-white/5">
-                    <input 
-                      type="number" step="0.5" min="0" placeholder="-"
-                      value={day.sleep === 0 ? '' : day.sleep}
-                      onChange={(e) => onUpdate(currentWeekNum, day.id, { sleep: e.target.value === '' ? 0 : Number(e.target.value) })}
-                      className="w-full bg-transparent text-center text-indigo-400 font-bold focus:outline-none focus:bg-[#222] rounded py-1 placeholder-gray-700"
-                    />
-                  </td>
-
-                  {/* 10-3-2-1-0 RULE (POPOVER) */}
-                  <td className="p-2 border-r border-white/5 relative">
-                    <button 
-                      onClick={() => setActiveDayEdit(activeDayEdit === day.id ? null : day.id)}
-                      className={`w-full py-2 px-1 rounded text-xs font-bold transition-all border ${
-                          getRuleScore(day.rule103210) === 5 
-                          ? 'bg-green-500/10 text-green-400 border-green-500/30' 
-                          : getRuleScore(day.rule103210) > 0 
-                             ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30'
-                             : 'text-gray-600 border-transparent hover:bg-[#222]'
-                      }`}
-                    >
-                      {getRuleScore(day.rule103210)} / 5
-                    </button>
-                    
-                    {/* POPOVER CARD */}
-                    {activeDayEdit === day.id && (
-                      <>
-                        {/* Backdrop Click to close */}
-                        <div className="fixed inset-0 z-40" onClick={() => setActiveDayEdit(null)}></div>
-                        
-                        <div className="absolute right-0 top-12 z-50 w-64 bg-[#161616]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-4 animate-in zoom-in-95 duration-200">
-                          <div className="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
-                             <span className="text-xs font-bold text-gray-400 uppercase">10-3-2-1-0 Szabály</span>
-                             <button onClick={() => setActiveDayEdit(null)} className="text-gray-500 hover:text-white"><span className="text-lg">×</span></button>
-                          </div>
-                          
-                          <div className="space-y-3">
-                             {[
-                               { k: 'caffeine', l: '10h: Koffein stop', c: 'peer-checked:bg-red-600' },
-                               { k: 'meal', l: '3h: Étkezés stop', c: 'peer-checked:bg-red-600' },
-                               { k: 'fluids', l: '2h: Folyadék stop', c: 'peer-checked:bg-red-600' },
-                               { k: 'screens', l: '1h: Képernyő stop', c: 'peer-checked:bg-red-600' },
-                               { k: 'snooze', l: '0: Szundigomb', c: 'peer-checked:bg-red-600' },
-                             ].map((item) => (
-                                <label key={item.k} className="flex items-center justify-between cursor-pointer group/label">
-                                    <span className="text-sm text-gray-300 group-hover/label:text-white transition-colors">{item.l}</span>
-                                    <div className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={(day.rule103210 as any)[item.k]} 
-                                            onChange={() => handleRuleToggle(day, item.k as keyof TenThreeTwoOneZeroRule)} 
-                                            className="sr-only peer" 
-                                        />
-                                        <div className={`w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer ${item.c} peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all`}></div>
-                                    </div>
-                                </label>
-                             ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </td>
-
-                  {/* EVENING HUNGER */}
-                  <td className="p-2 border-r border-white/5">
-                    <select 
-                        value={day.eveningHunger}
-                        onChange={(e) => onUpdate(currentWeekNum, day.id, { eveningHunger: Number(e.target.value) })}
-                        className={`w-full bg-transparent text-center font-bold text-sm appearance-none cursor-pointer py-2 rounded focus:bg-[#222] focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors ${
-                            day.eveningHunger === 0 ? 'text-gray-700' : 'text-gray-200'
-                        }`}
-                    >
-                        <option value={0} className="bg-[#111] text-gray-500">-</option>
-                        {[1,2,3,4,5].map(v => <option key={v} value={v} className="bg-[#111] text-white">{v}</option>)}
-                    </select>
-                  </td>
-
-                  {/* WELLBEING */}
-                  <td className="p-2 border-r border-white/5">
-                    <select 
-                        value={day.wellbeing}
-                        onChange={(e) => onUpdate(currentWeekNum, day.id, { wellbeing: Number(e.target.value) })}
-                        className={`w-full bg-transparent text-center font-bold text-sm appearance-none cursor-pointer py-2 rounded focus:bg-[#222] focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors ${
-                            day.wellbeing >= 4 ? 'text-green-400' : day.wellbeing === 0 ? 'text-gray-700' : 'text-gray-300'
-                        }`}
-                    >
-                        <option value={0} className="bg-[#111] text-gray-500">-</option>
-                        {[1,2,3,4,5].map(v => <option key={v} value={v} className="bg-[#111] text-white">{v}</option>)}
-                    </select>
-                  </td>
-
-                  {/* NOTES */}
-                  <td className="p-2">
-                    <input 
-                      type="text" 
-                      value={day.notes}
-                      placeholder="..."
-                      onChange={(e) => onUpdate(currentWeekNum, day.id, { notes: e.target.value })}
-                      className="w-full bg-transparent text-sm text-gray-300 placeholder-gray-700 px-3 py-1 focus:bg-[#222] focus:outline-none rounded focus:ring-1 focus:ring-red-500/50 transition-colors"
-                    />
-                  </td>
-
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <div className="bg-[#111] border border-white/5 p-4 rounded-xl flex items-center gap-3 text-gray-500 text-xs shadow-lg">
-        <InfoIcon />
-        <p>Tipp: Az adataid automatikusan mentődnek a böngésződben. A 10-3-2-1-0 szabály részleteihez kattints a cellára.</p>
-      </div>
-
     </div>
   );
 };
 
-export default WeeklyLog;
+export default RuleInfo;
