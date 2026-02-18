@@ -67,7 +67,7 @@ const Header: React.FC = () => {
             }`}></span>
           </Link>
           
-          {/* Ide később jöhet pl. egy Kilépés gomb vagy Profil ikon */}
+          {/*.*/}
         </nav>
       </div>
     </header>
