@@ -132,7 +132,7 @@ const RuleInfo: React.FC = () => {
                   </span>
                   <div>
                     <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Folyadék stop</span>
-                    <p className="text-sm text-gray-300">órával lefekvés előtt csökkentsd a folyadékot.</p>
+                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs folyadék.</p>
                   </div>
                 </div>
 
