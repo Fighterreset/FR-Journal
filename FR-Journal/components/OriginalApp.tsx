@@ -227,7 +227,7 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
                 <div className="space-y-10 animate-in fade-in duration-500">
                   <RuleInfo />
 
-                  {/* ✅ Edzői gomb (csak admin) - Prémium stílus */}
+                  {/* ✅ Edzői gomb (csak admin) */}
                   {isAdmin && (
                     <div className="flex justify-end">
                       <Link
@@ -367,7 +367,7 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
         </main>
 
         <footer className="py-10 bg-[#050505] text-center border-t border-white/5">
-          <p className="text-gray-500 text-sm font-medium">© 2025 Fighter Reset Program</p>
+          <p className="text-gray-500 text-sm font-medium">© 2025 Fighter Reset </p>
           <p className="text-xs text-gray-600 mt-2">Minden jog fenntartva.</p>
         </footer>
       </div>
