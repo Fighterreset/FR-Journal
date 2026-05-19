@@ -334,27 +334,27 @@ export default function CoachDashboard() {
                 {/* STAT CARDS Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                    {/* Alvás */}
-                   <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl">
+                   <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
                       <div className="text-xs text-gray-500 mb-1">Alvás</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).sleep ?? "—"} <span className="text-xs font-normal text-gray-600">óra</span></div>
                    </div>
                    {/* Víz */}
-                   <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl">
+                   <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
                       <div className="text-xs text-gray-500 mb-1">Víz</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).water ?? "—"} <span className="text-xs font-normal text-gray-600">L</span></div>
                    </div>
                    {/* Kaja */}
-                   <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl">
+                   <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
                       <div className="text-xs text-gray-500 mb-1">Kaja</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).nutrition ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
                    </div>
                    {/* Közérzet */}
-                   <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl">
+                   <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
                       <div className="text-xs text-gray-500 mb-1">Közérzet</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).wellbeing ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
                    </div>
                    {/* Esti éhség */}
-                   <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl border-red-500/20">
+                   <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
                       <div className="text-xs text-gray-500 mb-1">Esti éhség</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).eveningHunger ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
                    </div>
