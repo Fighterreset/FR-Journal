@@ -332,7 +332,7 @@ export default function CoachDashboard() {
                 </div>
 
                 {/* STAT CARDS Grid */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                    {/* Alvás */}
                    <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl">
                       <div className="text-xs text-gray-500 mb-1">Alvás</div>
@@ -352,6 +352,11 @@ export default function CoachDashboard() {
                    <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl">
                       <div className="text-xs text-gray-500 mb-1">Közérzet</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).wellbeing ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
+                   </div>
+                   {/* Esti éhség */}
+                   <div className="bg-[#1a1a1a] border border-white/5 p-3 rounded-xl border-red-500/20">
+                      <div className="text-xs text-gray-500 mb-1">Esti éhség</div>
+                      <div className="text-lg font-bold text-white">{(selectedDay as any).eveningHunger ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
                    </div>
                 </div>
 
