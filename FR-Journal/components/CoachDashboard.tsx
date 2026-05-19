@@ -190,7 +190,7 @@ export default function CoachDashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-440px)] min-h-[500px]">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[70vh] min-h-[600px] max-h-[850px] mb-8">
           
           {/* 1) KLIENS LISTA (SIDEBAR) */}
           <div className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col h-full shadow-xl">
