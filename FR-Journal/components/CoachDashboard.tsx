@@ -190,10 +190,10 @@ export default function CoachDashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[70vh] min-h-[600px] max-h-[850px] mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:h-[75vh] lg:min-h-[600px] mb-8">
           
           {/* 1) KLIENS LISTA (SIDEBAR) */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col h-full shadow-xl">
+          <div className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col h-full shadow-xl min-h-0">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Kliensek</h3>
             <div className="overflow-y-auto space-y-2 pr-2 custom-scrollbar flex-1">
               {clients.map((c) => (
@@ -216,7 +216,7 @@ export default function CoachDashboard() {
           </div>
 
           {/* 2) MIDDLE PANEL (HETEK + NAPOK) */}
-          <div className="lg:col-span-2 bg-[#111] border border-white/5 rounded-2xl p-6 flex flex-col h-full shadow-xl overflow-y-auto">
+          <div className="lg:col-span-2 bg-[#111] border border-white/5 rounded-2xl p-6 flex flex-col h-full shadow-xl overflow-y-auto min-h-0 custom-scrollbar">
             {!selected ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-3 opacity-50">
                 <UserIcon />
@@ -311,7 +311,7 @@ export default function CoachDashboard() {
           </div>
 
           {/* 3) RÉSZLETES NAP NÉZET */}
-          <div className="bg-[#111] border border-white/5 rounded-2xl p-6 h-full shadow-xl overflow-y-auto">
+          <div className="bg-[#111] border border-white/5 rounded-2xl p-6 h-full shadow-xl overflow-y-auto min-h-0 custom-scrollbar">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Részletek</h3>
 
             {!selectedDay ? (
