@@ -170,8 +170,8 @@ export default function CoachDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans p-6">
-      <div className="max-w-[1600px] mx-auto space-y-8">
+    <div className="bg-[#0a0a0a] text-gray-200 font-sans p-2 md:p-4">
+      <div className="max-w-[1600px] mx-auto space-y-6">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/5 pb-4">
@@ -190,7 +190,7 @@ export default function CoachDashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-340px)] pb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-440px)] min-h-[500px]">
           
           {/* 1) KLIENS LISTA (SIDEBAR) */}
           <div className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col h-full shadow-xl">
