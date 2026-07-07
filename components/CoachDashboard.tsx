@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { AppState, WeekData, DayData } from "../types";
+import { useLanguage } from "../context/LanguageContext";
 
 // --- Ikonok ---
 const UserIcon = () => (
@@ -96,6 +97,22 @@ export default function CoachDashboard() {
 
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
+  
+  const { t, language } = useLanguage();
+
+  // Napok fordítása
+  const translateDay = (dayName: string) => {
+    const days: Record<string, string> = {
+      "Hétfő": t("monday"),
+      "Kedd": t("tuesday"),
+      "Szerda": t("wednesday"),
+      "Csütörtök": t("thursday"),
+      "Péntek": t("friday"),
+      "Szombat": t("saturday"),
+      "Vasárnap": t("sunday")
+    };
+    return days[dayName] || dayName;
+  };
 
   // kliensek betöltése
   useEffect(() => {
@@ -135,7 +152,7 @@ export default function CoachDashboard() {
     }
 
     if (!data?.data) {
-      setMsg("Nincs még mentett adat ennél a kliensnél.");
+      setMsg(t("noSavedData"));
       return;
     }
 
@@ -180,7 +197,7 @@ export default function CoachDashboard() {
               Fighter Reset <span className="text-red-600">Coach</span>
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Kliensek és naplók áttekintése
+              {t("coachSubtitle")}
             </p>
           </div>
           {msg && (
@@ -194,7 +211,7 @@ export default function CoachDashboard() {
           
           {/* 1) KLIENS LISTA (SIDEBAR) */}
           <div className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col h-full shadow-xl min-h-0">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Kliensek</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">{t("clients")}</h3>
             <div className="overflow-y-auto space-y-2 pr-2 custom-scrollbar flex-1">
               {clients.map((c) => (
                 <div
@@ -209,7 +226,7 @@ export default function CoachDashboard() {
                    <div className={`p-1.5 rounded-full ${selected?.id === c.id ? "bg-red-600" : "bg-[#252525] group-hover:bg-[#333]"}`}>
                       <UserIcon />
                    </div>
-                   <span className="truncate font-medium">{c.email || "Ismeretlen ID"}</span>
+                   <span className="truncate font-medium">{c.email || t("unknownId")}</span>
                 </div>
               ))}
             </div>
@@ -220,7 +237,7 @@ export default function CoachDashboard() {
             {!selected ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-3 opacity-50">
                 <UserIcon />
-                <p>Válassz ki egy klienst bal oldalt az adatok betöltéséhez.</p>
+                <p>{t("selectClientPrompt")}</p>
               </div>
             ) : (
               <>
@@ -230,12 +247,12 @@ export default function CoachDashboard() {
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                        {selected.email}
                     </h3>
-                    <p className="text-xs text-gray-400 mt-1">Statisztika áttekintő</p>
+                    <p className="text-xs text-gray-400 mt-1">{t("statsOverview")}</p>
                   </div>
                   <div className="bg-[#1a1a1a] border border-white/5 px-4 py-2 rounded-lg text-right">
-                    <div className="text-xs text-gray-500 uppercase">Kitöltöttség</div>
+                    <div className="text-xs text-gray-500 uppercase">{t("completionRate")}</div>
                     <div className="text-lg font-bold text-white">
-                      <span className="text-red-500">{totalFilled.filled}</span> / {totalFilled.total} nap
+                      <span className="text-red-500">{totalFilled.filled}</span> / {totalFilled.total} {t("days")}
                     </div>
                   </div>
                 </div>
@@ -245,7 +262,7 @@ export default function CoachDashboard() {
                     
                     {/* HETEK GRID */}
                     <div>
-                      <h4 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">Hetek</h4>
+                      <h4 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">{t("weeksTitle")}</h4>
                       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                         {weeks.map((w: any) => {
                           const s = weekSummary(w);
@@ -261,11 +278,11 @@ export default function CoachDashboard() {
                               }`}
                             >
                               <div className="text-sm font-bold flex justify-between items-center">
-                                {w.weekNumber}. hét
+                                {language === "hu" ? `${w.weekNumber}. ${t("week")}` : `${t("week")} ${w.weekNumber}`}
                                 {active && <div className="h-2 w-2 bg-white rounded-full animate-pulse" />}
                               </div>
                               <div className="mt-2 space-y-1">
-                                <div className="text-[10px] uppercase opacity-70">Kitöltve</div>
+                                <div className="text-[10px] uppercase opacity-70">{t("filled")}</div>
                                 <div className="text-lg font-bold leading-none">{s.filledDays}<span className="text-xs opacity-50">/{w.days?.length}</span></div>
                               </div>
                             </button>
@@ -278,7 +295,7 @@ export default function CoachDashboard() {
                     {selectedWeek && (
                       <div className="animate-in slide-in-from-bottom-2 duration-300">
                         <h4 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider flex items-center gap-2">
-                           {selectedWeek.weekNumber}. hét napjai
+                           {language === "hu" ? `${selectedWeek.weekNumber}. hét napjai` : `Days of ${t("week")} ${selectedWeek.weekNumber}`}
                            <span className="h-px bg-gray-800 flex-1"></span>
                         </h4>
 
@@ -296,7 +313,7 @@ export default function CoachDashboard() {
                                     : "bg-[#1a1a1a] border-[#252525] hover:bg-[#222] text-gray-300"
                                 }`}
                               >
-                                <span className="font-medium">{(d as any).dayName ?? d.id}</span>
+                                <span className="font-medium">{d.dayName ? translateDay(d.dayName) : d.id}</span>
                                 <div className={`h-2.5 w-2.5 rounded-full ${filled ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-700"}`} />
                               </button>
                             );
@@ -312,11 +329,11 @@ export default function CoachDashboard() {
 
           {/* 3) RÉSZLETES NAP NÉZET */}
           <div className="bg-[#111] border border-white/5 rounded-2xl p-6 h-full shadow-xl overflow-y-auto min-h-0 custom-scrollbar">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Részletek</h3>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{t("details")}</h3>
 
             {!selectedDay ? (
-               <div className="h-40 flex items-center justify-center text-gray-600 text-sm border-2 border-dashed border-[#222] rounded-xl">
-                 Válassz napot a részletekhez
+               <div className="h-40 flex items-center justify-center text-gray-600 text-sm border-2 border-dashed border-[#222] rounded-xl text-center p-4">
+                 {t("selectDayPrompt")}
                </div>
             ) : (
               <div className="space-y-6 animate-in zoom-in-95 duration-200">
@@ -324,7 +341,7 @@ export default function CoachDashboard() {
                 {/* Cím */}
                 <div className="border-b border-white/5 pb-4">
                   <div className="text-2xl font-bold text-white">
-                    {(selectedDay as any).dayName ?? (selectedDay as any).id}
+                    {(selectedDay as any).dayName ? translateDay((selectedDay as any).dayName) : (selectedDay as any).id}
                   </div>
                   <div className="text-xs text-gray-500 font-mono mt-1">
                     ID: {(selectedDay as any).id}
@@ -335,27 +352,27 @@ export default function CoachDashboard() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                    {/* Alvás */}
                    <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
-                      <div className="text-xs text-gray-500 mb-1">Alvás</div>
-                      <div className="text-lg font-bold text-white">{(selectedDay as any).sleep ?? "—"} <span className="text-xs font-normal text-gray-600">óra</span></div>
+                      <div className="text-xs text-gray-500 mb-1">{t("sleep")}</div>
+                      <div className="text-lg font-bold text-white">{(selectedDay as any).sleep ?? "—"} <span className="text-xs font-normal text-gray-600">{t("hours")}</span></div>
                    </div>
                    {/* Víz */}
                    <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
-                      <div className="text-xs text-gray-500 mb-1">Víz</div>
+                      <div className="text-xs text-gray-500 mb-1">{t("water")}</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).water ?? "—"} <span className="text-xs font-normal text-gray-600">L</span></div>
                    </div>
                    {/* Kaja */}
                    <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
-                      <div className="text-xs text-gray-500 mb-1">Kaja</div>
+                      <div className="text-xs text-gray-500 mb-1">{t("nutrition")}</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).nutrition ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
                    </div>
                    {/* Közérzet */}
                    <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
-                      <div className="text-xs text-gray-500 mb-1">Közérzet</div>
+                      <div className="text-xs text-gray-500 mb-1">{t("wellbeing")}</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).wellbeing ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
                    </div>
                    {/* Esti éhség */}
                    <div className="bg-[#1a1a1a] border p-3 rounded-xl border-red-500/20">
-                      <div className="text-xs text-gray-500 mb-1">Esti éhség</div>
+                      <div className="text-xs text-gray-500 mb-1">{t("eveningHunger")}</div>
                       <div className="text-lg font-bold text-white">{(selectedDay as any).eveningHunger ?? "—"} <span className="text-xs font-normal text-gray-600">/5</span></div>
                    </div>
                 </div>
@@ -366,23 +383,23 @@ export default function CoachDashboard() {
                     ? "bg-green-500/10 border-green-500/30 text-green-400" 
                     : "bg-[#1a1a1a] border-[#252525] text-gray-500"
                 }`}>
-                    <span className="font-bold text-sm">Edzés</span>
+                    <span className="font-bold text-sm">{t("workout")}</span>
                     {(selectedDay as any).workout ? <ActivityIcon /> : "—"}
                 </div>
 
                 {/* 10-3-2-1-0 Szabály */}
                 <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4">
-                  <div className="font-bold text-white text-sm mb-3 border-b border-white/5 pb-2">10-3-2-1-0 Szabály</div>
+                  <div className="font-bold text-white text-sm mb-3 border-b border-white/5 pb-2">{t("rule103210Title")}</div>
                   {(() => {
                     const r = (selectedDay as any).rule103210;
-                    if (!r) return <div className="text-gray-500 text-xs italic">Nincs adat rögzítve.</div>;
+                    if (!r) return <div className="text-gray-500 text-xs italic">{t("noDataRecorded")}</div>;
                     return (
                       <div className="space-y-2">
-                        <div className="flex justify-between items-center text-sm text-gray-300"><span>Meal</span> {badge(!!r.meal)}</div>
-                        <div className="flex justify-between items-center text-sm text-gray-300"><span>Fluids</span> {badge(!!r.fluids)}</div>
-                        <div className="flex justify-between items-center text-sm text-gray-300"><span>Snooze</span> {badge(!!r.snooze)}</div>
-                        <div className="flex justify-between items-center text-sm text-gray-300"><span>Screens</span> {badge(!!r.screens)}</div>
-                        <div className="flex justify-between items-center text-sm text-gray-300"><span>Caffeine</span> {badge(!!r.caffeine)}</div>
+                        <div className="flex justify-between items-center text-sm text-gray-300"><span>{t("ruleMealWord")}</span> {badge(!!r.meal)}</div>
+                        <div className="flex justify-between items-center text-sm text-gray-300"><span>{t("ruleFluidsWord")}</span> {badge(!!r.fluids)}</div>
+                        <div className="flex justify-between items-center text-sm text-gray-300"><span>{t("ruleSnoozeWord")}</span> {badge(!!r.snooze)}</div>
+                        <div className="flex justify-between items-center text-sm text-gray-300"><span>{t("ruleScreensWord")}</span> {badge(!!r.screens)}</div>
+                        <div className="flex justify-between items-center text-sm text-gray-300"><span>{t("ruleCaffeineWord")}</span> {badge(!!r.caffeine)}</div>
                       </div>
                     );
                   })()}
@@ -390,16 +407,16 @@ export default function CoachDashboard() {
 
                 {/* Megjegyzés */}
                 <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4">
-                  <div className="font-bold text-gray-400 text-xs uppercase mb-2">Megjegyzés</div>
+                  <div className="font-bold text-gray-400 text-xs uppercase mb-2">{t("notes")}</div>
                   <div className="text-gray-200 text-sm whitespace-pre-wrap leading-relaxed">
-                    {((selectedDay as any).notes ?? "").trim() || <span className="text-gray-600 italic">Nincs megjegyzés.</span>}
+                    {((selectedDay as any).notes ?? "").trim() || <span className="text-gray-600 italic">{t("noNotes")}</span>}
                   </div>
                 </div>
 
                 {/* Debug Collapse */}
                 <details className="group">
                   <summary className="cursor-pointer text-xs text-gray-600 hover:text-red-500 transition-colors list-none">
-                    [+] Nyers JSON adat (Debug)
+                    {t("rawJsonDebug")}
                   </summary>
                   <div className="bg-black border border-gray-800 rounded-lg p-3 mt-2">
                      <pre className="text-[10px] text-green-400 overflow-auto max-h-40 font-mono">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 // --- Ikonok ---
 const InfoIcon = () => (
@@ -18,6 +19,8 @@ const WaterSleepIcon = () => (
 );
 
 const RuleInfo: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <div className="relative bg-[#111] text-gray-200 rounded-3xl border border-white/5 shadow-2xl overflow-hidden group">
       
@@ -33,10 +36,10 @@ const RuleInfo: React.FC = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white uppercase tracking-wide">
-              Jelmagyarázat & Szabályok
+              {t("legendTitle")}
             </h2>
             <p className="text-xs text-gray-500 font-medium mt-1">
-              Útmutató a napló helyes kitöltéséhez
+              {t("legendSubtitle")}
             </p>
           </div>
         </div>
@@ -46,15 +49,15 @@ const RuleInfo: React.FC = () => {
           {/* BAL OLDAL: Jelmagyarázat */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-              Hogyan töltsd?
+              {t("howToFill")}
             </h3>
             
             <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
                <div className="mt-1 p-2 bg-[#252525] rounded-lg text-red-500"><DumbbellIcon /></div>
                <div>
-                 <span className="block font-bold text-white text-sm mb-1">Edzés</span>
+                 <span className="block font-bold text-white text-sm mb-1">{t("workoutLabel")}</span>
                  <p className="text-xs text-gray-400 leading-relaxed">
-                   Jelöld be a pipát (checkbox), ha aznap elvégezted az előírt edzésmunkát.
+                   {t("workoutDesc")}
                  </p>
                </div>
             </div>
@@ -62,10 +65,10 @@ const RuleInfo: React.FC = () => {
             <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
                <div className="mt-1 p-2 bg-[#252525] rounded-lg text-yellow-500"><StarIcon /></div>
                <div>
-                 <span className="block font-bold text-white text-sm mb-1">Étkezés</span>
+                 <span className="block font-bold text-white text-sm mb-1">{t("nutritionLabel")}</span>
                  <p className="text-xs text-gray-400 leading-relaxed">
-                   Értékeld a napodat 1-től 5-ig. <br/>
-                   <span className="text-[10px] opacity-70">(1 = Csaló nap/Rossz, 5 = Tiszta étkezés/Tökéletes)</span>
+                   {t("nutritionDesc1")} <br/>
+                   <span className="text-[10px] opacity-70">{t("nutritionDesc2")}</span>
                  </p>
                </div>
             </div>
@@ -73,9 +76,9 @@ const RuleInfo: React.FC = () => {
             <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
                <div className="mt-1 p-2 bg-[#252525] rounded-lg text-purple-500"><PillIcon /></div>
                <div>
-                 <span className="block font-bold text-white text-sm mb-1">Kiegészítők</span>
+                 <span className="block font-bold text-white text-sm mb-1">{t("supplementsLabel")}</span>
                  <p className="text-xs text-gray-400 leading-relaxed">
-                   Jelöld be, ha bevetted a napi vitaminokat és táplálékkiegészítőket.
+                   {t("supplementsDesc")}
                  </p>
                </div>
             </div>
@@ -83,9 +86,9 @@ const RuleInfo: React.FC = () => {
             <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors flex items-start gap-4">
                <div className="mt-1 p-2 bg-[#252525] rounded-lg text-cyan-500"><WaterSleepIcon /></div>
                <div>
-                 <span className="block font-bold text-white text-sm mb-1">Víz & Alvás</span>
+                 <span className="block font-bold text-white text-sm mb-1">{t("waterSleepLabel")}</span>
                  <p className="text-xs text-gray-400 leading-relaxed">
-                   Írd be a pontos mennyiséget számmal (pl. 3 liter víz, 7.5 óra alvás).
+                   {t("waterSleepDesc")}
                  </p>
                </div>
             </div>
@@ -101,7 +104,7 @@ const RuleInfo: React.FC = () => {
                   <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-500 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
                 </span>
-                10-3-2-1-0 Szabály
+                {t("rule103210Title")}
               </h3>
 
               <div className="space-y-6">
@@ -111,8 +114,8 @@ const RuleInfo: React.FC = () => {
                     10
                   </span>
                   <div>
-                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Koffein stop</span>
-                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs koffein.</p>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">{t("ruleCaffeineTitle")}</span>
+                    <p className="text-sm text-gray-300">{t("ruleCaffeineDesc")}</p>
                   </div>
                 </div>
 
@@ -121,8 +124,8 @@ const RuleInfo: React.FC = () => {
                     3
                   </span>
                   <div>
-                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Kaja stop</span>
-                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs nagy étkezés.</p>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">{t("ruleMealTitle")}</span>
+                    <p className="text-sm text-gray-300">{t("ruleMealDesc")}</p>
                   </div>
                 </div>
 
@@ -131,8 +134,8 @@ const RuleInfo: React.FC = () => {
                     2
                   </span>
                   <div>
-                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Folyadék stop</span>
-                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs folyadék.</p>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">{t("ruleFluidsTitle")}</span>
+                    <p className="text-sm text-gray-300">{t("ruleFluidsDesc")}</p>
                   </div>
                 </div>
 
@@ -141,8 +144,8 @@ const RuleInfo: React.FC = () => {
                     1
                   </span>
                   <div>
-                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Képernyő stop</span>
-                    <p className="text-sm text-gray-300">órával lefekvés előtt nincs telefon/TV.</p>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">{t("ruleScreensTitle")}</span>
+                    <p className="text-sm text-gray-300">{t("ruleScreensDesc")}</p>
                   </div>
                 </div>
 
@@ -151,8 +154,8 @@ const RuleInfo: React.FC = () => {
                     0
                   </span>
                   <div>
-                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Szundi stop</span>
-                    <p className="text-sm text-gray-300">szundigomb reggel. Ébredj azonnal!</p>
+                    <span className="text-red-500 font-bold text-xs uppercase tracking-widest">{t("ruleSnoozeTitle")}</span>
+                    <p className="text-sm text-gray-300">{t("ruleSnoozeDesc")}</p>
                   </div>
                 </div>
 
