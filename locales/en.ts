@@ -128,7 +128,21 @@ const en = {
   completionRate: "Completion Rate",
   filled: "Filled",
   selectDayPrompt: "Select a day for details",
-  noSavedData: "No saved data for this client yet."
+  noSavedData: "No saved data for this client yet.",
+
+  // Password change
+  changePasswordTitle: "Change Password",
+  currentPassword: "Current Password",
+  newPassword: "New Password",
+  confirmNewPassword: "Confirm New Password",
+  changePasswordBtn: "Update Password",
+  processing: "Processing...",
+  passwordMismatch: "New passwords do not match!",
+  passwordTooShort: "New password must be at least 6 characters!",
+  noUserFound: "No logged in user found.",
+  wrongCurrentPassword: "Current password is incorrect!",
+  passwordUpdateError: "Error updating password.",
+  passwordUpdateSuccess: "Password successfully updated!"
 };
 
 export default en;

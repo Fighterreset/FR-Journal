@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useLanguage } from "../context/LanguageContext"; // Ha be akarod kötni a fordítást
+import { useLanguage } from "../context/LanguageContext";
 
 const ChangePassword = () => {
   const { t } = useLanguage();
@@ -14,47 +14,45 @@ const ChangePassword = () => {
     e.preventDefault();
     setMessage(null);
 
-    // 1. Alapvető ellenőrzések
+    // Any típus használata a kulcsokhoz
+    const translate = (key: string) => (t as any)(key) || key;
+
     if (newPassword !== confirmPassword) {
-      setMessage({ text: "Az új jelszavak nem egyeznek!", type: "error" });
+      setMessage({ text: translate("passwordMismatch"), type: "error" });
       return;
     }
     if (newPassword.length < 6) {
-      setMessage({ text: "Az új jelszónak legalább 6 karakternek kell lennie!", type: "error" });
+      setMessage({ text: translate("passwordTooShort"), type: "error" });
       return;
     }
 
     setLoading(true);
 
     try {
-      // 2. Szerezzük meg a jelenlegi felhasználó email címét
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user?.email) {
-        throw new Error("Nem található bejelentkezett felhasználó.");
+        throw new Error(translate("noUserFound"));
       }
 
-      // 3. TRÜKK: Ellenőrizzük a régi jelszót egy teszt bejelentkezéssel
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: currentPassword,
       });
 
       if (signInError) {
-        throw new Error("A jelenlegi jelszó helytelen!");
+        throw new Error(translate("wrongCurrentPassword"));
       }
 
-      // 4. Ha a régi jelszó jó, frissítjük az újra
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
       if (updateError) {
-        throw new Error("Hiba történt a jelszó frissítésekor.");
+        throw new Error(translate("passwordUpdateError"));
       }
 
-      // SIKER!
-      setMessage({ text: "A jelszó sikeresen megváltozott!", type: "success" });
+      setMessage({ text: translate("passwordUpdateSuccess"), type: "success" });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -66,16 +64,18 @@ const ChangePassword = () => {
     }
   };
 
+  const translate = (key: string) => (t as any)(key) || key;
+
   return (
     <div className="bg-[#111] border border-white/5 rounded-2xl p-6 shadow-xl max-w-md mx-auto mt-8">
       <h2 className="text-xl font-bold text-gray-300 mb-6 flex items-center gap-2">
         <span className="w-1 h-6 bg-red-600 rounded-full"></span>
-        Jelszó megváltoztatása
+        {translate("changePasswordTitle")}
       </h2>
 
       <form onSubmit={handleChangePassword} className="space-y-4">
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Jelenlegi jelszó</label>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{translate("currentPassword")}</label>
           <input
             type="password"
             value={currentPassword}
@@ -86,7 +86,7 @@ const ChangePassword = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Új jelszó</label>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{translate("newPassword")}</label>
           <input
             type="password"
             value={newPassword}
@@ -97,7 +97,7 @@ const ChangePassword = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Új jelszó megerősítése</label>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{translate("confirmNewPassword")}</label>
           <input
             type="password"
             value={confirmPassword}
@@ -118,7 +118,7 @@ const ChangePassword = () => {
           disabled={loading}
           className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-red-900 to-red-700 hover:from-red-800 hover:to-red-600 text-white font-bold rounded-xl shadow-lg transition-all disabled:opacity-50"
         >
-          {loading ? "Feldolgozás..." : "Jelszó módosítása"}
+          {loading ? translate("processing") : translate("changePasswordBtn")}
         </button>
       </form>
     </div>

@@ -128,7 +128,21 @@ const hu = {
   completionRate: "Kitöltöttség",
   filled: "Kitöltve",
   selectDayPrompt: "Válassz napot a részletekhez",
-  noSavedData: "Nincs még mentett adat ennél a kliensnél."
+  noSavedData: "Nincs még mentett adat ennél a kliensnél.",
+
+  // Jelszó csere
+  changePasswordTitle: "Jelszó megváltoztatása",
+  currentPassword: "Jelenlegi jelszó",
+  newPassword: "Új jelszó",
+  confirmNewPassword: "Új jelszó megerősítése",
+  changePasswordBtn: "Jelszó módosítása",
+  processing: "Feldolgozás...",
+  passwordMismatch: "Az új jelszavak nem egyeznek!",
+  passwordTooShort: "Az új jelszónak legalább 6 karakternek kell lennie!",
+  noUserFound: "Nem található bejelentkezett felhasználó.",
+  wrongCurrentPassword: "A jelenlegi jelszó helytelen!",
+  passwordUpdateError: "Hiba történt a jelszó frissítésekor.",
+  passwordUpdateSuccess: "A jelszó sikeresen megváltozott!"
 };
 
 export default hu;
