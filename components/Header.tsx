@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
 const Header: React.FC = () => {
   const location = useLocation();
-  const isHome = location.pathname === '/';
-  
-  // State a kép betöltési hiba kezelésére (az innerHTML helyett ez a React-os megoldás)
+  const isHome = location.pathname === "/";
+
+  const { language, setLanguage, t } = useLanguage();
+
   const [logoError, setLogoError] = useState(false);
 
   return (
@@ -50,7 +52,7 @@ const Header: React.FC = () => {
         </Link>
 
         {/* --- NAVIGÁCIÓ --- */}
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-4">
           <Link 
             to="/" 
             className={`relative px-3 py-2 text-sm font-bold uppercase tracking-widest transition-all duration-300 group ${
@@ -59,15 +61,36 @@ const Header: React.FC = () => {
                 : 'text-gray-400 hover:text-white'
             }`}
           >
-            Főoldal
+            {t("home")}
             
             {/* Animált aláhúzás */}
             <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-red-600 rounded-full transform transition-transform duration-300 origin-left ${
               isHome ? 'scale-x-100 shadow-[0_0_10px_rgba(220,38,38,0.8)]' : 'scale-x-0 group-hover:scale-x-50'
             }`}></span>
           </Link>
-          
-          {/*.*/}
+<div className="flex items-center gap-1 bg-[#111] rounded-lg p-1 border border-white/10">
+  <button
+    onClick={() => setLanguage("hu")}
+    className={`px-3 py-1 rounded text-xs font-bold transition ${
+      language === "hu"
+        ? "bg-red-600 text-white"
+        : "text-gray-400 hover:text-white"
+    }`}
+  >
+    HU
+  </button>
+
+  <button
+    onClick={() => setLanguage("en")}
+    className={`px-3 py-1 rounded text-xs font-bold transition ${
+      language === "en"
+        ? "bg-red-600 text-white"
+        : "text-gray-400 hover:text-white"
+    }`}
+  >
+    EN
+  </button>
+</div>
         </nav>
       </div>
     </header>

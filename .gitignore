@@ -1,0 +1,16 @@
+# Biztonság (Titkos kulcsok)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Függőségek (Szemét mappák)
+node_modules
+/dist
+/.next
+/build
+
+# Rendszerfájlok
+.DS_Store
+Thumbs.db
