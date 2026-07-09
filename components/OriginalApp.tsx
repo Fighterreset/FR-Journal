@@ -10,6 +10,7 @@ import { loadUserState, saveUserState } from "../lib/userState";
 import { supabase } from "../lib/supabase";
 import CoachDashboard from "./CoachDashboard";
 import { useLanguage } from "../context/LanguageContext";
+import ChangePassword from "./ChangePassword";
 
 // --- IKONOK (SVG) ---
 const DownloadIcon = () => (
@@ -30,6 +31,9 @@ const ArrowRightIcon = () => (
 const CoachIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
 );
+const KeyIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-3.286l5.742-5.742C9.432 10.973 10.15 9.043 11 7c2.21 0 4.004-.895 6-2s2 4 2 4z" /></svg>
+);
 
 type Props = {
   userId: string;
@@ -40,11 +44,13 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Új state a jelszócserélő lenyílásához
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const saveTimer = useRef<number | null>(null);
   
-  // Nyelvi hook beemelése
   const { t, language } = useLanguage();
 
   useEffect(() => {
@@ -327,6 +333,13 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
                         </button>
 
                         <button
+                          onClick={() => setShowPasswordChange(!showPasswordChange)}
+                          className={`px-4 py-2 ${showPasswordChange ? 'bg-red-900/40 text-red-400 border-red-900/50' : 'bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white border-white/5 hover:border-white/10'} text-sm font-bold rounded-xl transition-all border flex items-center gap-2`}
+                        >
+                          <KeyIcon /> {(t as any)("changePassword") || "Jelszó csere"}
+                        </button>
+
+                        <button
                           onClick={logout}
                           className="px-4 py-2 bg-[#252525] hover:bg-white text-white hover:text-black text-sm font-bold rounded-xl transition-colors border border-transparent shadow-lg flex items-center gap-2"
                         >
@@ -335,6 +348,14 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
                       </div>
                     </div>
                   </div>
+
+                  {/* JELSZÓCSERÉLŐ ŰRLAP (Feltételes megjelenítés) */}
+                  {showPasswordChange && (
+                    <div className="animate-in slide-in-from-top-4 fade-in duration-300 ease-out">
+                      <ChangePassword />
+                    </div>
+                  )}
+
                 </div>
               }
             />

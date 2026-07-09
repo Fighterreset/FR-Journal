@@ -26,6 +26,7 @@ const hu = {
   loginButton: "BELÉPÉS",
   noAccount: "Nincs fiókod? Kérj hozzáférést az edződtől.",
   loginSuccess: "Sikeres belépés!",
+  changePassword: "Jelszó módosítása"
 
   // Adatkezelés / Szinkronizáció
   foundLocalData: "Találtam korábbi adatokat a böngészőben. Importáljam a fiókodba?",
