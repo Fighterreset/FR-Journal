@@ -26,7 +26,7 @@ const en = {
   loginButton: "LOGIN",
   noAccount: "Don't have an account? Ask your coach for access.",
   loginSuccess: "Successful login!",
-  changePassword: "Change Password"
+  changePassword: "Change Password",
 
   // Adatkezelés / Szinkronizáció
   foundLocalData: "Found previous data in the browser. Do you want to import it into your account?",
