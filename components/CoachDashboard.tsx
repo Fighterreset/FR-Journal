@@ -36,6 +36,11 @@ type ClientGroup = {
 
 type GroupFilter = "all" | "ungrouped" | string;
 
+type GroupClientState = {
+  client: Client;
+  state: AppState | null;
+};
+
 function buildMindsetOverview(weeks: WeekData[]) {
   const exerciseIds = Object.keys(MINDSET_EXERCISE_CATALOG) as MindsetExerciseId[];
   const byExercise = Object.fromEntries(
@@ -105,6 +110,51 @@ function buildMindsetOverview(weeks: WeekData[]) {
     pending: planned - recorded,
     byExercise,
     byWeek,
+  };
+}
+
+function buildGroupSummary(rows: GroupClientState[]) {
+  const withData = rows.filter((row) => row.state?.weeks?.length);
+  const allDays = withData.flatMap((row) => row.state?.weeks?.flatMap((week) => week.days ?? []) ?? []);
+  const filledDays = allDays.filter(isDayFilled).length;
+  const workouts = allDays.filter((day) => day.workout === true).length;
+  const averageOf = (key: "sleep" | "water" | "nutrition" | "wellbeing") => {
+    const values = allDays
+      .map((day) => (day as any)[key])
+      .filter((value) => typeof value === "number" && value > 0) as number[];
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+  };
+
+  const combinedWeeks: WeekData[] = Array.from({ length: 8 }, (_, index) => ({
+    weekNumber: index + 1,
+    days: withData.flatMap((row) =>
+      row.state?.weeks?.find((week) => week.weekNumber === index + 1)?.days ?? []
+    ),
+  }));
+  const mindset = buildMindsetOverview(combinedWeeks);
+
+  return {
+    totalClients: rows.length,
+    clientsWithData: withData.length,
+    filledDays,
+    totalDays: rows.length * 56,
+    workouts,
+    avgSleep: averageOf("sleep"),
+    avgWater: averageOf("water"),
+    avgNutrition: averageOf("nutrition"),
+    avgWellbeing: averageOf("wellbeing"),
+    mindset,
+  };
+}
+
+function clientJournalSummary(state: AppState | null) {
+  const weeks = state?.weeks ?? [];
+  const days = weeks.flatMap((week) => week.days ?? []);
+  const mindset = buildMindsetOverview(weeks);
+  return {
+    filledDays: days.filter(isDayFilled).length,
+    mindsetCompleted: mindset.completed,
+    mindsetPlanned: mindset.planned,
   };
 }
 
@@ -197,6 +247,9 @@ export default function CoachDashboard() {
   const [editingGroupName, setEditingGroupName] = useState("");
   const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState<string | null>(null);
   const [groupBusy, setGroupBusy] = useState(false);
+  const [groupOverviewId, setGroupOverviewId] = useState<string | null>(null);
+  const [groupOverviewRows, setGroupOverviewRows] = useState<GroupClientState[]>([]);
+  const [groupOverviewLoading, setGroupOverviewLoading] = useState(false);
 
   const [appState, setAppState] = useState<AppState | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<WeekData | null>(null);
@@ -422,6 +475,41 @@ export default function CoachDashboard() {
     }
   };
 
+  const loadGroupOverview = async (groupId: string) => {
+    setGroupOverviewId(groupId);
+    setSelected(null);
+    setAppState(null);
+    setSelectedWeek(null);
+    setSelectedDay(null);
+    setMsg("");
+    setGroupOverviewLoading(true);
+
+    try {
+      const groupClients = clients.filter((client) => memberships[client.id] === groupId);
+      if (!groupClients.length) {
+        setGroupOverviewRows([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_state")
+        .select("user_id,data,updated_at")
+        .in("user_id", groupClients.map((client) => client.id));
+
+      if (error) throw error;
+      const statesByUser = new Map((data ?? []).map((row: any) => [row.user_id, row.data as AppState]));
+      setGroupOverviewRows(groupClients.map((client) => ({
+        client,
+        state: statesByUser.get(client.id) ?? null,
+      })));
+    } catch (error: any) {
+      setMsg(error?.message || t("coachLoadError"));
+      setGroupOverviewRows([]);
+    } finally {
+      setGroupOverviewLoading(false);
+    }
+  };
+
   const weeks = appState?.weeks ?? [];
   const filteredClients = useMemo(() => {
     if (activeGroupFilter === "all") return clients;
@@ -552,7 +640,10 @@ export default function CoachDashboard() {
                       ) : (
                         <>
                           <button
-                            onClick={() => setActiveGroupFilter(group.id)}
+                            onClick={() => {
+                              setActiveGroupFilter(group.id);
+                              void loadGroupOverview(group.id);
+                            }}
                             className={`min-w-0 flex-1 flex items-center justify-between text-left text-xs py-1 ${
                               activeGroupFilter === group.id ? "text-red-300" : "text-gray-300"
                             }`}
@@ -594,7 +685,11 @@ export default function CoachDashboard() {
                 <button
                   key={client.id}
                   type="button"
-                  onClick={() => void loadClientState(client)}
+                  onClick={() => {
+                    setGroupOverviewId(null);
+                    setGroupOverviewRows([]);
+                    void loadClientState(client);
+                  }}
                   className={`w-full text-left cursor-pointer px-3 py-3 rounded-xl text-sm flex items-center gap-3 transition-all duration-200 group border ${
                     selected?.id === client.id
                       ? "bg-gradient-to-r from-red-900/40 to-red-800/10 border-red-500/30 text-white shadow-[0_0_15px_rgba(220,38,38,0.1)]"
@@ -613,10 +708,121 @@ export default function CoachDashboard() {
           {/* 2) MIDDLE PANEL (HETEK + NAPOK) */}
           <div className="lg:col-span-2 bg-[#111] border border-white/5 rounded-2xl p-6 flex flex-col h-full shadow-xl overflow-y-auto min-h-0 custom-scrollbar">
             {!selected ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-3 opacity-50">
-                <UserIcon />
-                <p>{t("selectClientPrompt")}</p>
-              </div>
+              groupOverviewId ? (
+                <div className="space-y-5">
+                  {(() => {
+                    const group = groups.find((item) => item.id === groupOverviewId);
+                    const summary = buildGroupSummary(groupOverviewRows);
+                    return (
+                      <>
+                        <div className="border-b border-white/5 pb-4">
+                          <div className="text-xs uppercase tracking-widest text-red-400 font-bold mb-1">{t("groupOverviewLabel")}</div>
+                          <h3 className="text-2xl font-bold text-white">{group?.name ?? t("groupOverviewLabel")}</h3>
+                          <p className="text-xs text-gray-500 mt-1">{t("groupOverviewDescription")}</p>
+                        </div>
+
+                        {groupOverviewLoading ? (
+                          <div className="py-12 text-center text-sm text-gray-500">{t("loadingGroupOverview")}</div>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("groupMembers")}</div>
+                                <div className="text-2xl font-bold text-white mt-1">{summary.totalClients}</div>
+                              </div>
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("clientsWithJournal")}</div>
+                                <div className="text-2xl font-bold text-green-400 mt-1">{summary.clientsWithData}/{summary.totalClients}</div>
+                              </div>
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("groupFilledDays")}</div>
+                                <div className="text-2xl font-bold text-white mt-1">{summary.filledDays}/{summary.totalDays}</div>
+                              </div>
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("groupWorkoutCount")}</div>
+                                <div className="text-2xl font-bold text-white mt-1">{summary.workouts}</div>
+                              </div>
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("avgSleep")}</div>
+                                <div className="text-2xl font-bold text-white mt-1">{summary.avgSleep === null ? "—" : summary.avgSleep.toFixed(1)} <span className="text-xs text-gray-500">h</span></div>
+                              </div>
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("avgWater")}</div>
+                                <div className="text-2xl font-bold text-white mt-1">{summary.avgWater === null ? "—" : summary.avgWater.toFixed(1)} <span className="text-xs text-gray-500">L</span></div>
+                              </div>
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("nutrition")}</div>
+                                <div className="text-2xl font-bold text-white mt-1">{summary.avgNutrition === null ? "—" : summary.avgNutrition.toFixed(1)} <span className="text-xs text-gray-500">/5</span></div>
+                              </div>
+                              <div className="bg-[#1a1a1a] rounded-xl p-4">
+                                <div className="text-[10px] uppercase text-gray-500">{t("wellbeing")}</div>
+                                <div className="text-2xl font-bold text-white mt-1">{summary.avgWellbeing === null ? "—" : summary.avgWellbeing.toFixed(1)} <span className="text-xs text-gray-500">/5</span></div>
+                              </div>
+                            </div>
+
+                            <section className="bg-[#0d0d0d] border border-red-900/20 rounded-xl p-4 space-y-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wide">{t("groupMindsetSummary")}</h4>
+                                <span className="text-sm font-bold text-green-400">{summary.mindset.completed}/{summary.mindset.planned}</span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="bg-[#171717] rounded-lg p-3"><div className="text-[10px] text-gray-500 uppercase">{t("mindsetCompleted")}</div><div className="text-xl text-green-400 font-bold">{summary.mindset.completed}</div></div>
+                                <div className="bg-[#171717] rounded-lg p-3"><div className="text-[10px] text-gray-500 uppercase">{t("mindsetNotCompleted")}</div><div className="text-xl text-gray-200 font-bold">{summary.mindset.notCompleted}</div></div>
+                                <div className="bg-[#171717] rounded-lg p-3"><div className="text-[10px] text-gray-500 uppercase">{t("mindsetPending")}</div><div className="text-xl text-yellow-400 font-bold">{summary.mindset.pending}</div></div>
+                              </div>
+                              <div className="space-y-2">
+                                {(Object.keys(MINDSET_EXERCISE_CATALOG) as MindsetExerciseId[]).map((id) => {
+                                  const stats = summary.mindset.byExercise[id];
+                                  return <div key={id} className="flex justify-between gap-3 border-b border-white/5 pb-2 text-xs">
+                                    <span className="text-gray-300">{t(MINDSET_EXERCISE_CATALOG[id].nameKey)}</span>
+                                    <span className="shrink-0"><b className="text-green-400">{stats.completed}</b><span className="text-gray-500"> / {stats.planned}</span></span>
+                                  </div>;
+                                })}
+                              </div>
+                            </section>
+
+                            <section className="space-y-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wide">{t("groupIndividualJournals")}</h4>
+                                <span className="text-xs text-gray-600">{summary.totalClients}</span>
+                              </div>
+                              {groupOverviewRows.map((row) => {
+                                const clientStats = clientJournalSummary(row.state);
+                                return (
+                                  <button
+                                    key={row.client.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setGroupOverviewId(null);
+                                      setGroupOverviewRows([]);
+                                      void loadClientState(row.client);
+                                    }}
+                                    className="w-full text-left bg-[#1a1a1a] hover:bg-[#222] border border-white/5 rounded-xl p-3 flex items-center justify-between gap-3"
+                                  >
+                                    <span className="min-w-0">
+                                      <span className="block text-sm text-white font-medium truncate">{row.client.full_name || row.client.email || t("unknownId")}</span>
+                                      <span className="block text-[10px] text-gray-500 mt-1">{row.state ? t("journalAvailable") : t("noSavedData")}</span>
+                                    </span>
+                                    <span className="shrink-0 text-right">
+                                      <span className="block text-xs text-gray-300">{clientStats.filledDays}/56 {t("filledDaysShort")}</span>
+                                      <span className="block text-[10px] text-green-400 mt-1">{t("mindsetColumn")}: {clientStats.mindsetCompleted}/{clientStats.mindsetPlanned}</span>
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </section>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-3 opacity-50">
+                  <UserIcon />
+                  <p>{t("selectClientPrompt")}</p>
+                </div>
+              )
             ) : (
               <>
                 {/* Kiválasztott kliens és csoport-hozzárendelés */}
