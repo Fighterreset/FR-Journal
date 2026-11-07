@@ -7,6 +7,17 @@ export interface TenThreeTwoOneZeroRule {
   snooze: boolean;   // 0 snooze
 }
 
+export type MindsetExerciseId =
+  | "microBreak"
+  | "stopTechnique"
+  | "boxBreathing"
+  | "focusBlock"
+  | "tenseRelax"
+  | "controlCircle"
+  | "grounding54321";
+
+export type MindsetCompletion = Partial<Record<MindsetExerciseId, boolean>>;
+
 export interface DayData {
   id: string; // e.g. "w1-d1"
   dayName: string;
@@ -19,6 +30,8 @@ export interface DayData {
   eveningHunger: number; // 0-5
   wellbeing: number; // 1-5
   notes: string;
+  /** Optional for backwards compatibility with previously saved journal entries. */
+  mindset?: MindsetCompletion;
 }
 
 export interface WeekData {

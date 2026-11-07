@@ -1,5 +1,5 @@
 
-import { DayData, WeekData } from './types';
+import { DayData, MindsetExerciseId, WeekData } from './types';
 
 export const DAYS_HU = [
   'Hétfő',
@@ -31,6 +31,7 @@ const createEmptyDay = (weekNum: number, dayIdx: number): DayData => ({
   eveningHunger: 0,
   wellbeing: 0, // Changed from 5 to 0
   notes: '',
+  mindset: {},
 });
 
 export const INITIAL_WEEKS: WeekData[] = Array.from({ length: 8 }, (_, i) => ({
@@ -40,3 +41,35 @@ export const INITIAL_WEEKS: WeekData[] = Array.from({ length: 8 }, (_, i) => ({
 
 export const BRAND_RED = '#b91c1c';
 export const APP_STORAGE_KEY = 'fighter-reset-diary-v1';
+
+
+export const MINDSET_EXERCISE_CATALOG = {
+  microBreak: { id: 'microBreak', nameKey: 'mindsetMicroBreak' },
+  stopTechnique: { id: 'stopTechnique', nameKey: 'mindsetStopTechnique' },
+  boxBreathing: { id: 'boxBreathing', nameKey: 'mindsetBoxBreathing' },
+  focusBlock: { id: 'focusBlock', nameKey: 'mindsetFocusBlock' },
+  tenseRelax: { id: 'tenseRelax', nameKey: 'mindsetTenseRelax' },
+  controlCircle: { id: 'controlCircle', nameKey: 'mindsetControlCircle' },
+  grounding54321: { id: 'grounding54321', nameKey: 'mindsetGrounding54321' },
+} as const;
+
+export interface MindsetWeekPlan {
+  required: MindsetExerciseId[];
+  optional: MindsetExerciseId[];
+}
+
+/**
+ * A gyakorlatok hétről hétre egymásra épülnek.
+ * A 3. héten nincs új kötelező elem; a korábban bevezetett gyakorlatok opcionálisak.
+ * A 8. héten az 5-4-3-2-1 gyakorlat és a Kontrollkör is kötelező.
+ */
+export const MINDSET_WEEK_PLAN: Record<number, MindsetWeekPlan> = {
+  1: { required: ['microBreak'], optional: [] },
+  2: { required: ['stopTechnique', 'boxBreathing'], optional: ['microBreak'] },
+  3: { required: [], optional: ['stopTechnique', 'boxBreathing', 'microBreak'] },
+  4: { required: ['focusBlock'], optional: ['stopTechnique', 'boxBreathing', 'microBreak'] },
+  5: { required: ['tenseRelax'], optional: ['focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
+  6: { required: ['controlCircle'], optional: ['tenseRelax', 'focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
+  7: { required: ['grounding54321'], optional: ['controlCircle', 'tenseRelax', 'focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
+  8: { required: ['grounding54321', 'controlCircle'], optional: ['tenseRelax', 'focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
+};
