@@ -185,7 +185,19 @@ const en = {
   noUserFound: "No logged in user found.",
   wrongCurrentPassword: "Current password is incorrect!",
   passwordUpdateError: "Error updating password.",
-  passwordUpdateSuccess: "Password successfully updated!"
+  passwordUpdateSuccess: "Password successfully updated!",
+
+  groupOverviewLabel: "Group overview",
+  groupOverviewDescription: "Combined journal data for group members. Select a client to open their individual journal.",
+  loadingGroupOverview: "Loading group data...",
+  groupMembers: "Group members",
+  clientsWithJournal: "With journal data",
+  groupFilledDays: "Filled days",
+  groupWorkoutCount: "Workout count",
+  groupMindsetSummary: "Group Mindset summary",
+  groupIndividualJournals: "Open individual journals",
+  journalAvailable: "Journal data available",
+  filledDaysShort: "days"
 };
 
 export default en;

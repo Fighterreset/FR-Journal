@@ -185,7 +185,19 @@ const hu = {
   noUserFound: "Nem található bejelentkezett felhasználó.",
   wrongCurrentPassword: "A jelenlegi jelszó helytelen!",
   passwordUpdateError: "Hiba történt a jelszó frissítésekor.",
-  passwordUpdateSuccess: "A jelszó sikeresen megváltozott!"
+  passwordUpdateSuccess: "A jelszó sikeresen megváltozott!",
+
+  groupOverviewLabel: "Csoportáttekintés",
+  groupOverviewDescription: "A csoport tagjainak naplóadatai összesítve. Válassz ki egy klienst az egyéni napló megnyitásához.",
+  loadingGroupOverview: "Csoportadatok betöltése...",
+  groupMembers: "Csoportlétszám",
+  clientsWithJournal: "Naplóval rendelkezik",
+  groupFilledDays: "Kitöltött napok",
+  groupWorkoutCount: "Edzések száma",
+  groupMindsetSummary: "Csoportos Mindset-összesítés",
+  groupIndividualJournals: "Egyéni naplók megnyitása",
+  journalAvailable: "Naplóadatok elérhetők",
+  filledDaysShort: "nap"
 };
 
 export default hu;
