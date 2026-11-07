@@ -131,20 +131,33 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
         <div className="h-1 w-full bg-gradient-to-r from-red-900 via-red-600 to-red-900"></div>
 
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse min-w-[1400px]">
+          <table className="w-full min-w-[960px] table-fixed text-left border-collapse">
+            <colgroup>
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '21%' }} />
+            </colgroup>
             <thead>
-              <tr className="bg-[#161616] text-gray-400 text-[11px] font-bold uppercase tracking-widest border-b border-white/10">
-                <th className="p-4 sticky left-0 bg-[#161616] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.5)] w-32">{t("day")}</th>
-                <th className="p-4 text-center w-24">{t("workout")}</th>
-                <th className="p-4 text-center w-28">{t("nutrition")} <span className="text-[9px] opacity-50">(1-5)</span></th>
-                <th className="p-4 text-center w-24">{t("supplements")}</th>
-                <th className="p-4 text-center w-28">{t("water")} <span className="text-[9px] opacity-50">(L)</span></th>
-                <th className="p-4 text-center w-28">{t("sleep")} <span className="text-[9px] opacity-50">(h)</span></th>
-                <th className="p-4 text-center w-40">10-3-2-1-0</th>
-                <th className="p-4 text-center w-28">{t("hunger")} <span className="text-[9px] opacity-50">(1-5)</span></th>
-                <th className="p-4 text-center w-28">{t("wellbeing")} <span className="text-[9px] opacity-50">(1-5)</span></th>
-                <th className="p-4 text-center w-36">{t("mindsetColumn")}</th>
-                <th className="p-4 min-w-[200px]">{t("notes")}</th>
+              <tr className="bg-[#161616] text-gray-400 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide border-b border-white/10">
+                <th className="px-2 py-3 sticky left-0 bg-[#161616] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.5)]">{t("day")}</th>
+                <th className="px-1.5 py-3 text-center">{t("workout")}</th>
+                <th className="px-1.5 py-3 text-center">{t("nutrition")} <span className="text-[9px] opacity-50">(1-5)</span></th>
+                <th className="px-1.5 py-3 text-center">{t("supplements")}</th>
+                <th className="px-1.5 py-3 text-center">{t("water")} <span className="text-[9px] opacity-50">(L)</span></th>
+                <th className="px-1.5 py-3 text-center">{t("sleep")} <span className="text-[9px] opacity-50">(h)</span></th>
+                <th className="px-1.5 py-3 text-center">10-3-2-1-0</th>
+                <th className="px-1.5 py-3 text-center">{t("hunger")} <span className="text-[9px] opacity-50">(1-5)</span></th>
+                <th className="px-1.5 py-3 text-center">{t("wellbeing")} <span className="text-[9px] opacity-50">(1-5)</span></th>
+                <th className="px-1.5 py-3 text-center">{t("mindsetColumn")}</th>
+                <th className="px-2 py-3">{t("notes")}</th>
               </tr>
             </thead>
             <tbody>
@@ -153,14 +166,14 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                 <tr 
                     className={`group transition-colors h-16 border-b border-white/5 hover:bg-white/[0.02] ${index % 2 === 0 ? 'bg-[#111]' : 'bg-[#131313]'}`}
                 >
-                  <td className="p-4 font-bold text-sm text-white sticky left-0 z-10 border-r border-white/5 bg-inherit group-hover:bg-[#1a1a1a] shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
+                  <td className="p-3 font-bold text-sm text-white sticky left-0 z-10 border-r border-white/5 bg-inherit group-hover:bg-[#1a1a1a] shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
                     <div className="flex flex-col">
                         <span>{translateDay(day.dayName)}</span>
                         <span className="text-[9px] text-gray-600 font-mono font-normal">DAY {index + 1}</span>
                     </div>
                   </td>
                   
-                  <td className="p-2 text-center border-r border-white/5">
+                  <td className="p-1.5 text-center border-r border-white/5">
                      <button 
                        onClick={() => onUpdate(currentWeekNum, day.id, { workout: !day.workout })}
                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all duration-300 ${
@@ -173,7 +186,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                      </button>
                   </td>
 
-                  <td className="p-2 border-r border-white/5">
+                  <td className="p-1.5 border-r border-white/5">
                     <div className="relative">
                         <select 
                           value={day.nutrition}
@@ -188,7 +201,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     </div>
                   </td>
 
-                  <td className="p-2 text-center border-r border-white/5">
+                  <td className="p-1.5 text-center border-r border-white/5">
                      <button 
                        onClick={() => onUpdate(currentWeekNum, day.id, { supplements: !day.supplements })}
                        className={`w-10 h-10 mx-auto rounded-lg flex items-center justify-center transition-all duration-300 ${
@@ -201,7 +214,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                      </button>
                   </td>
 
-                  <td className="p-2 border-r border-white/5">
+                  <td className="p-1.5 border-r border-white/5">
                     <input 
                       type="number" step="0.1" min="0" placeholder="-"
                       value={day.water === 0 ? '' : day.water}
@@ -210,7 +223,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     />
                   </td>
 
-                  <td className="p-2 border-r border-white/5">
+                  <td className="p-1.5 border-r border-white/5">
                     <input 
                       type="number" step="0.5" min="0" placeholder="-"
                       value={day.sleep === 0 ? '' : day.sleep}
@@ -219,7 +232,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     />
                   </td>
 
-                  <td className="p-2 border-r border-white/5 relative">
+                  <td className="p-1.5 border-r border-white/5 relative">
                     <button 
                       onClick={() => setActiveDayEdit(activeDayEdit === day.id ? null : day.id)}
                       className={`w-full py-2 px-1 rounded text-xs font-bold transition-all border ${
@@ -270,7 +283,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     )}
                   </td>
 
-                  <td className="p-2 border-r border-white/5">
+                  <td className="p-1.5 border-r border-white/5">
                     <select 
                         value={day.eveningHunger}
                         onChange={(e) => onUpdate(currentWeekNum, day.id, { eveningHunger: Number(e.target.value) })}
@@ -283,7 +296,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     </select>
                   </td>
 
-                  <td className="p-2 border-r border-white/5">
+                  <td className="p-1.5 border-r border-white/5">
                     <select 
                         value={day.wellbeing}
                         onChange={(e) => onUpdate(currentWeekNum, day.id, { wellbeing: Number(e.target.value) })}
@@ -296,7 +309,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     </select>
                   </td>
 
-                  <td className="p-2 text-center border-r border-white/5">
+                  <td className="p-1.5 text-center border-r border-white/5">
                     {(() => {
                       const completed = mindsetExercises.filter((exercise) => day.mindset?.[exercise.id] === true).length;
                       const expanded = activeMindsetDay === day.id;
@@ -306,7 +319,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                           aria-expanded={expanded}
                           aria-label={`${t("mindsetColumn")}: ${completed}/${mindsetExercises.length}`}
                           onClick={() => setActiveMindsetDay(expanded ? null : day.id)}
-                          className={`w-full max-w-24 mx-auto flex items-center justify-center gap-2 rounded-lg border px-2 py-2 text-xs font-bold transition-all ${
+                          className={`w-full max-w-full mx-auto flex items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[11px] font-bold transition-all whitespace-nowrap ${
                             completed === mindsetExercises.length && mindsetExercises.length > 0
                               ? 'bg-green-500/10 text-green-400 border-green-500/30'
                               : completed > 0
@@ -321,13 +334,13 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     })()}
                   </td>
 
-                  <td className="p-2">
+                  <td className="p-1.5 min-w-0">
                     <input 
                       type="text" 
                       value={day.notes}
                       placeholder="..."
                       onChange={(e) => onUpdate(currentWeekNum, day.id, { notes: e.target.value })}
-                      className="w-full bg-transparent text-sm text-gray-300 placeholder-gray-700 px-3 py-1 focus:bg-[#222] focus:outline-none rounded focus:ring-1 focus:ring-red-500/50 transition-colors"
+                      className="block w-full min-w-0 max-w-full bg-transparent text-xs sm:text-sm text-gray-300 placeholder-gray-700 px-2 py-1.5 focus:bg-[#222] focus:outline-none rounded focus:ring-1 focus:ring-red-500/50 transition-colors"
                     />
                   </td>
 
