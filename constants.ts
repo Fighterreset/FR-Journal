@@ -60,18 +60,18 @@ export interface MindsetWeekPlan {
 
 /**
  * A gyakorlatok hétről hétre egymásra épülnek.
- * A 3. héten nincs új kötelező elem; a korábban bevezetett gyakorlatok opcionálisak.
- * A 2. héten a Dobozlégzés az egyetlen kötelező gyakorlat.
- * A 3. héten nincs kötelező elem; a korábban bevezetett gyakorlatok opcionálisak.
- * A 7. és 8. héten kizárólag az 5-4-3-2-1 gyakorlat kötelező.
+ * A 2. héten a Stop technika és a Dobozlégzés is kötelező.
+ * A 3. héten nincs kötelező gyakorlat; mindhárom korábbi gyakorlat opcionális.
+ * A 7. héten kizárólag az 5-4-3-2-1 gyakorlat kötelező.
+ * A 8. héten minden gyakorlat opcionális.
  */
 export const MINDSET_WEEK_PLAN: Record<number, MindsetWeekPlan> = {
   1: { required: ['microBreak'], optional: [] },
-  2: { required: ['boxBreathing'], optional: ['stopTechnique', 'microBreak'] },
+  2: { required: ['stopTechnique', 'boxBreathing'], optional: ['microBreak'] },
   3: { required: [], optional: ['stopTechnique', 'boxBreathing', 'microBreak'] },
   4: { required: ['focusBlock'], optional: ['stopTechnique', 'boxBreathing', 'microBreak'] },
   5: { required: ['tenseRelax'], optional: ['focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
   6: { required: ['controlCircle'], optional: ['tenseRelax', 'focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
   7: { required: ['grounding54321'], optional: ['controlCircle', 'tenseRelax', 'focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
-  8: { required: ['grounding54321'], optional: ['controlCircle', 'tenseRelax', 'focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
+  8: { required: [], optional: ['grounding54321', 'controlCircle', 'tenseRelax', 'focusBlock', 'stopTechnique', 'boxBreathing', 'microBreak'] },
 };
