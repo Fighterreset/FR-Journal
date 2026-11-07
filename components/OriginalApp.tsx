@@ -43,6 +43,8 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
   const [state, setState] = useState<AppState>({ weeks: INITIAL_WEEKS });
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   
   // Új state a jelszócserélő lenyílásához
@@ -76,6 +78,8 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setReady(false);
+    setLoadError(false);
     (async () => {
       try {
         const cloud = await loadUserState<AppState>(userId);
@@ -106,13 +110,15 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
       } catch (e) {
         console.error("Failed to load cloud state", e);
         if (!cancelled) {
-          setReady(true);
-          setState({ weeks: INITIAL_WEEKS });
+          // Ne engedjük, hogy egy sikertelen felhőbetöltés után az üres kezdőállapot
+          // automatikusan felülírja a korábban mentett felhasználói naplót.
+          setReady(false);
+          setLoadError(true);
         }
       }
     })();
     return () => { cancelled = true; };
-  }, [userId, t]);
+  }, [userId, t, loadAttempt]);
 
   useEffect(() => {
     if (!ready) return;
@@ -188,6 +194,25 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
   const logout = async () => {
     await supabase.auth.signOut();
   };
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-[#111] border border-red-900/30 rounded-2xl p-6 text-center shadow-xl">
+          <div className="text-red-500 text-3xl mb-3">!</div>
+          <h2 className="text-white text-lg font-bold">{t("loadDataError")}</h2>
+          <p className="text-gray-500 text-sm mt-2">{t("loadDataErrorDesc")}</p>
+          <button
+            type="button"
+            onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+            className="mt-5 px-5 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white text-sm font-bold transition-colors"
+          >
+            {t("retryLoad")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!ready) {
     return (

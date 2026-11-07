@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { WeekData, DayData, TenThreeTwoOneZeroRule } from '../types';
+import { WeekData, DayData, MindsetExerciseId, TenThreeTwoOneZeroRule } from '../types';
+import { MINDSET_EXERCISE_CATALOG, MINDSET_WEEK_PLAN } from '../constants';
 import { useLanguage } from '../context/LanguageContext';
 
 // --- Ikonok ---
@@ -22,9 +23,15 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
   const weekData = weeks.find(w => w.weekNumber === currentWeekNum);
 
   const [activeDayEdit, setActiveDayEdit] = useState<string | null>(null);
+  const [activeMindsetDay, setActiveMindsetDay] = useState<string | null>(null);
   
   // Nyelvkezelés beemelése
   const { t, language } = useLanguage();
+  const mindsetPlan = MINDSET_WEEK_PLAN[currentWeekNum] ?? { required: [], optional: [] };
+  const mindsetExercises = [
+    ...mindsetPlan.required.map((id) => ({ ...MINDSET_EXERCISE_CATALOG[id], required: true })),
+    ...mindsetPlan.optional.map((id) => ({ ...MINDSET_EXERCISE_CATALOG[id], required: false })),
+  ];
 
   if (!weekData) {
     return (
@@ -41,6 +48,15 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
         ...day.rule103210,
         [ruleKey]: !day.rule103210[ruleKey]
       }
+    });
+  };
+
+  const handleMindsetToggle = (day: DayData, exerciseId: MindsetExerciseId, completed: boolean) => {
+    onUpdate(currentWeekNum, day.id, {
+      mindset: {
+        ...(day.mindset ?? {}),
+        [exerciseId]: completed,
+      },
     });
   };
 
@@ -115,7 +131,7 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
         <div className="h-1 w-full bg-gradient-to-r from-red-900 via-red-600 to-red-900"></div>
 
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse min-w-[1200px]">
+          <table className="w-full text-left border-collapse min-w-[1400px]">
             <thead>
               <tr className="bg-[#161616] text-gray-400 text-[11px] font-bold uppercase tracking-widest border-b border-white/10">
                 <th className="p-4 sticky left-0 bg-[#161616] z-20 shadow-[2px_0_5px_rgba(0,0,0,0.5)] w-32">{t("day")}</th>
@@ -127,13 +143,14 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                 <th className="p-4 text-center w-40">10-3-2-1-0</th>
                 <th className="p-4 text-center w-28">{t("hunger")} <span className="text-[9px] opacity-50">(1-5)</span></th>
                 <th className="p-4 text-center w-28">{t("wellbeing")} <span className="text-[9px] opacity-50">(1-5)</span></th>
+                <th className="p-4 text-center w-36">{t("mindsetColumn")}</th>
                 <th className="p-4 min-w-[200px]">{t("notes")}</th>
               </tr>
             </thead>
             <tbody>
               {weekData.days.map((day, index) => (
+                <React.Fragment key={day.id}>
                 <tr 
-                    key={day.id} 
                     className={`group transition-colors h-16 border-b border-white/5 hover:bg-white/[0.02] ${index % 2 === 0 ? 'bg-[#111]' : 'bg-[#131313]'}`}
                 >
                   <td className="p-4 font-bold text-sm text-white sticky left-0 z-10 border-r border-white/5 bg-inherit group-hover:bg-[#1a1a1a] shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
@@ -279,6 +296,31 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                     </select>
                   </td>
 
+                  <td className="p-2 text-center border-r border-white/5">
+                    {(() => {
+                      const completed = mindsetExercises.filter((exercise) => day.mindset?.[exercise.id] === true).length;
+                      const expanded = activeMindsetDay === day.id;
+                      return (
+                        <button
+                          type="button"
+                          aria-expanded={expanded}
+                          aria-label={`${t("mindsetColumn")}: ${completed}/${mindsetExercises.length}`}
+                          onClick={() => setActiveMindsetDay(expanded ? null : day.id)}
+                          className={`w-full max-w-24 mx-auto flex items-center justify-center gap-2 rounded-lg border px-2 py-2 text-xs font-bold transition-all ${
+                            completed === mindsetExercises.length && mindsetExercises.length > 0
+                              ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                              : completed > 0
+                                ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+                                : 'bg-[#1a1a1a] text-gray-400 border-white/10 hover:border-red-500/40 hover:text-white'
+                          }`}
+                        >
+                          <span>{completed}/{mindsetExercises.length}</span>
+                          <span className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>⌄</span>
+                        </button>
+                      );
+                    })()}
+                  </td>
+
                   <td className="p-2">
                     <input 
                       type="text" 
@@ -290,6 +332,64 @@ const WeeklyLog: React.FC<WeeklyLogProps> = ({ weeks, onUpdate }) => {
                   </td>
 
                 </tr>
+                {activeMindsetDay === day.id && (
+                  <tr className="bg-[#171717] border-b border-white/10">
+                    <td colSpan={11} className="p-4 md:p-5">
+                      <div className="rounded-xl border border-white/10 bg-[#101010] p-4 md:p-5 shadow-inner">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                          <div>
+                            <h3 className="text-sm font-black uppercase tracking-wider text-white">{t("mindsetDailyTitle")}</h3>
+                            <p className="text-xs text-gray-500 mt-1">{translateDay(day.dayName)}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-3 text-[10px] uppercase tracking-wider font-bold">
+                            <span className="text-red-400">● {t("mindsetRequired")}</span>
+                            <span className="text-gray-500">● {t("mindsetOptional")}</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {mindsetExercises.map((exercise) => {
+                            const value = day.mindset?.[exercise.id];
+                            return (
+                              <div key={exercise.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-white/5 bg-[#171717] px-3 py-3">
+                                <div className="min-w-0">
+                                  <div className={`text-sm ${exercise.required ? 'font-black text-white' : 'font-medium text-gray-300'}`}>
+                                    {t(exercise.nameKey)}
+                                  </div>
+                                  <div className={`text-[10px] uppercase tracking-wider mt-1 font-bold ${exercise.required ? 'text-red-400' : 'text-gray-600'}`}>
+                                    {exercise.required ? t("mindsetRequired") : t("mindsetOptional")}
+                                  </div>
+                                  <div className={`text-[10px] mt-1 ${value === true ? 'text-green-400' : value === false ? 'text-gray-500' : 'text-yellow-600'}`}>
+                                    {value === true ? t("mindsetYes") : value === false ? t("mindsetNo") : t("mindsetNotRecorded")}
+                                  </div>
+                                </div>
+                                <div className="inline-flex self-start sm:self-auto rounded-lg border border-white/10 bg-[#101010] p-1 gap-1 shrink-0">
+                                  <button
+                                    type="button"
+                                    aria-pressed={value === true}
+                                    onClick={() => handleMindsetToggle(day, exercise.id, true)}
+                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${value === true ? 'bg-green-600 text-white' : 'text-gray-500 hover:text-green-400 hover:bg-green-500/10'}`}
+                                  >
+                                    {t("mindsetYes")}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-pressed={value === false}
+                                    onClick={() => handleMindsetToggle(day, exercise.id, false)}
+                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${value === false ? 'bg-[#454545] text-white' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+                                  >
+                                    {t("mindsetNo")}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

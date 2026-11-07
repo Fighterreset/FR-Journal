@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { AppState, WeekData, DayData } from "../types";
+import { AppState, WeekData, DayData, MindsetExerciseId } from "../types";
+import { MINDSET_EXERCISE_CATALOG, MINDSET_WEEK_PLAN } from "../constants";
 import { useLanguage } from "../context/LanguageContext";
 
 // --- Ikonok ---
@@ -23,8 +24,101 @@ const ActivityIcon = () => (
 // --- Típusok és Helper függvények  ---
 type Client = {
   id: string;
-  email: string;
+  email: string | null;
+  full_name: string | null;
 };
+
+type ClientGroup = {
+  id: string;
+  name: string;
+  created_at: string;
+};
+
+type GroupFilter = "all" | "ungrouped" | string;
+
+function buildMindsetOverview(weeks: WeekData[]) {
+  const exerciseIds = Object.keys(MINDSET_EXERCISE_CATALOG) as MindsetExerciseId[];
+  const byExercise = Object.fromEntries(
+    exerciseIds.map((id) => [id, { planned: 0, recorded: 0, completed: 0, notCompleted: 0 }])
+  ) as Record<MindsetExerciseId, { planned: number; recorded: number; completed: number; notCompleted: number }>;
+
+  let planned = 0;
+  let recorded = 0;
+  let completed = 0;
+  let notCompleted = 0;
+
+  const byWeek = weeks.map((week) => {
+    const plan = MINDSET_WEEK_PLAN[week.weekNumber];
+    if (!plan) return null;
+
+    const exerciseIdsForWeek = [...plan.required, ...plan.optional];
+    let weekPlanned = 0;
+    let weekRecorded = 0;
+    let weekCompleted = 0;
+    let weekNotCompleted = 0;
+
+    for (const day of week.days ?? []) {
+      for (const id of exerciseIdsForWeek) {
+        planned += 1;
+        weekPlanned += 1;
+        byExercise[id].planned += 1;
+        const value = day.mindset?.[id];
+        if (typeof value === "boolean") {
+          recorded += 1;
+          weekRecorded += 1;
+          byExercise[id].recorded += 1;
+          if (value) {
+            completed += 1;
+            weekCompleted += 1;
+            byExercise[id].completed += 1;
+          } else {
+            notCompleted += 1;
+            weekNotCompleted += 1;
+            byExercise[id].notCompleted += 1;
+          }
+        }
+      }
+    }
+
+    return {
+      weekNumber: week.weekNumber,
+      planned: weekPlanned,
+      recorded: weekRecorded,
+      completed: weekCompleted,
+      notCompleted: weekNotCompleted,
+      pending: weekPlanned - weekRecorded,
+    };
+  }).filter(Boolean) as Array<{
+    weekNumber: number;
+    planned: number;
+    recorded: number;
+    completed: number;
+    notCompleted: number;
+    pending: number;
+  }>;
+
+  return {
+    planned,
+    recorded,
+    completed,
+    notCompleted,
+    pending: planned - recorded,
+    byExercise,
+    byWeek,
+  };
+}
+
+function getDayMindsetProgress(day: DayData, weekNumber: number) {
+  const plan = MINDSET_WEEK_PLAN[weekNumber];
+  if (!plan) return { completed: 0, recorded: 0, total: 0 };
+  const ids = [...plan.required, ...plan.optional];
+  const values = ids.map((id) => day.mindset?.[id]);
+  return {
+    completed: values.filter((value) => value === true).length,
+    recorded: values.filter((value) => typeof value === "boolean").length,
+    total: ids.length,
+  };
+}
 
 function isDayFilled(d: DayData) {
   const notes = (d as any).notes ?? "";
@@ -39,6 +133,10 @@ function isDayFilled(d: DayData) {
     rule && typeof rule === "object"
       ? Object.values(rule).some((v) => v === true)
       : false;
+  const mindsetAny =
+    d.mindset && typeof d.mindset === "object"
+      ? Object.values(d.mindset).some((v) => typeof v === "boolean")
+      : false;
 
   return (
     (typeof notes === "string" && notes.trim().length > 0) ||
@@ -47,7 +145,8 @@ function isDayFilled(d: DayData) {
     (typeof nutrition === "number" && nutrition !== 0) ||
     (typeof wellbeing === "number" && wellbeing !== 0) ||
     workout === true ||
-    ruleAny
+    ruleAny ||
+    mindsetAny
   );
 }
 
@@ -89,15 +188,22 @@ function badge(ok: boolean) {
 export default function CoachDashboard() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selected, setSelected] = useState<Client | null>(null);
+  const [groups, setGroups] = useState<ClientGroup[]>([]);
+  const [memberships, setMemberships] = useState<Record<string, string>>({});
+  const [coachId, setCoachId] = useState<string | null>(null);
+  const [activeGroupFilter, setActiveGroupFilter] = useState<GroupFilter>("all");
+  const [newGroupName, setNewGroupName] = useState("");
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState("");
+  const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState<string | null>(null);
+  const [groupBusy, setGroupBusy] = useState(false);
 
   const [appState, setAppState] = useState<AppState | null>(null);
-
   const [selectedWeek, setSelectedWeek] = useState<WeekData | null>(null);
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
-  
+
   const { t, language } = useLanguage();
 
   // Napok fordítása
@@ -114,24 +220,181 @@ export default function CoachDashboard() {
     return days[dayName] || dayName;
   };
 
-  // kliensek betöltése
+  // Profilok, csoportok és csoporttagságok betöltése a bejelentkezett adminhoz.
   useEffect(() => {
+    let active = true;
+
     (async () => {
       setLoading(true);
       setMsg("");
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id,email")
-        .neq("role", "admin")
-        .order("created_at", { ascending: false });
+      try {
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!authData.user) throw new Error(t("coachAuthRequired"));
 
-      if (error) setMsg(error.message);
-      if (!error && data) setClients(data);
+        const currentCoachId = authData.user.id;
+        const [profilesResult, groupsResult, membersResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id,email,full_name")
+            .neq("role", "admin")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("coach_client_groups")
+            .select("id,name,created_at")
+            .eq("coach_id", currentCoachId)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("coach_client_group_members")
+            .select("client_id,group_id")
+            .eq("coach_id", currentCoachId),
+        ]);
 
-      setLoading(false);
+        if (profilesResult.error) throw profilesResult.error;
+        if (groupsResult.error) throw groupsResult.error;
+        if (membersResult.error) throw membersResult.error;
+
+        if (!active) return;
+
+        setCoachId(currentCoachId);
+        setClients((profilesResult.data ?? []) as Client[]);
+        setGroups((groupsResult.data ?? []) as ClientGroup[]);
+        setMemberships(
+          Object.fromEntries((membersResult.data ?? []).map((row) => [row.client_id, row.group_id]))
+        );
+      } catch (error: any) {
+        if (active) setMsg(error?.message || t("coachLoadError"));
+      } finally {
+        if (active) setLoading(false);
+      }
     })();
+
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const createGroup = async () => {
+    const name = newGroupName.trim();
+    if (!name || !coachId || groupBusy) return;
+    if (name.length > 80) {
+      setMsg(t("groupNameTooLong"));
+      return;
+    }
+
+    setGroupBusy(true);
+    setMsg("");
+    try {
+      const { data, error } = await supabase
+        .from("coach_client_groups")
+        .insert({ coach_id: coachId, name })
+        .select("id,name,created_at")
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setGroups((current) => [...current, data as ClientGroup]);
+        setNewGroupName("");
+      }
+    } catch (error: any) {
+      setMsg(error?.message || t("coachLoadError"));
+    } finally {
+      setGroupBusy(false);
+    }
+  };
+
+  const saveGroupName = async (groupId: string) => {
+    const name = editingGroupName.trim();
+    if (!name || !coachId || groupBusy) return;
+    if (name.length > 80) {
+      setMsg(t("groupNameTooLong"));
+      return;
+    }
+
+    setGroupBusy(true);
+    setMsg("");
+    try {
+      const { data, error } = await supabase
+        .from("coach_client_groups")
+        .update({ name })
+        .eq("id", groupId)
+        .eq("coach_id", coachId)
+        .select("id,name,created_at")
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setGroups((current) => current.map((group) => group.id === groupId ? data as ClientGroup : group));
+        setEditingGroupId(null);
+        setEditingGroupName("");
+      }
+    } catch (error: any) {
+      setMsg(error?.message || t("coachLoadError"));
+    } finally {
+      setGroupBusy(false);
+    }
+  };
+
+  const deleteGroup = async (groupId: string) => {
+    if (!coachId || groupBusy) return;
+    setGroupBusy(true);
+    setMsg("");
+    try {
+      const { error } = await supabase
+        .from("coach_client_groups")
+        .delete()
+        .eq("id", groupId)
+        .eq("coach_id", coachId);
+
+      if (error) throw error;
+      setGroups((current) => current.filter((group) => group.id !== groupId));
+      setMemberships((current) => Object.fromEntries(
+        Object.entries(current).filter(([, assignedGroupId]) => assignedGroupId !== groupId)
+      ));
+      if (activeGroupFilter === groupId) setActiveGroupFilter("all");
+      setConfirmDeleteGroupId(null);
+    } catch (error: any) {
+      setMsg(error?.message || t("coachLoadError"));
+    } finally {
+      setGroupBusy(false);
+    }
+  };
+
+  const assignClientToGroup = async (clientId: string, groupId: string) => {
+    if (!coachId || groupBusy) return;
+    setGroupBusy(true);
+    setMsg("");
+    try {
+      const result = groupId
+        ? await supabase
+            .from("coach_client_group_members")
+            .upsert(
+              { coach_id: coachId, client_id: clientId, group_id: groupId },
+              { onConflict: "coach_id,client_id" }
+            )
+        : await supabase
+            .from("coach_client_group_members")
+            .delete()
+            .eq("coach_id", coachId)
+            .eq("client_id", clientId);
+
+      if (result.error) throw result.error;
+      setMemberships((current) => {
+        const next = { ...current };
+        if (groupId) next[clientId] = groupId;
+        else delete next[clientId];
+        return next;
+      });
+      if (activeGroupFilter !== "all") {
+        setActiveGroupFilter(groupId || "ungrouped");
+      }
+    } catch (error: any) {
+      setMsg(error?.message || t("coachLoadError"));
+    } finally {
+      setGroupBusy(false);
+    }
+  };
 
   const loadClientState = async (client: Client) => {
     setSelected(client);
@@ -140,26 +403,33 @@ export default function CoachDashboard() {
     setSelectedDay(null);
     setMsg("");
 
-    const { data, error } = await supabase
-      .from("user_state")
-      .select("data,updated_at")
-      .eq("user_id", client.id)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("user_state")
+        .select("data,updated_at")
+        .eq("user_id", client.id)
+        .maybeSingle();
 
-    if (error) {
-      setMsg(error.message);
-      return;
+      if (error) throw error;
+      if (!data?.data) {
+        setMsg(t("noSavedData"));
+        return;
+      }
+
+      setAppState(data.data as AppState);
+    } catch (error: any) {
+      setMsg(error?.message || t("coachLoadError"));
     }
-
-    if (!data?.data) {
-      setMsg(t("noSavedData"));
-      return;
-    }
-
-    setAppState(data.data as AppState);
   };
 
   const weeks = appState?.weeks ?? [];
+  const filteredClients = useMemo(() => {
+    if (activeGroupFilter === "all") return clients;
+    if (activeGroupFilter === "ungrouped") return clients.filter((client) => !memberships[client.id]);
+    return clients.filter((client) => memberships[client.id] === activeGroupFilter);
+  }, [clients, memberships, activeGroupFilter]);
+
+  const mindsetStats = useMemo(() => buildMindsetOverview(weeks), [weeks]);
 
   const totalFilled = useMemo(() => {
     let filled = 0;
@@ -209,25 +479,133 @@ export default function CoachDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:h-[75vh] lg:min-h-[600px] mb-8">
           
-          {/* 1) KLIENS LISTA (SIDEBAR) */}
+          {/* 1) KLIENSEK ÉS CSOPORTOK */}
           <div className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col h-full shadow-xl min-h-0">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">{t("clients")}</h3>
-            <div className="overflow-y-auto space-y-2 pr-2 custom-scrollbar flex-1">
-              {clients.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => loadClientState(c)}
-                  className={`cursor-pointer px-4 py-3 rounded-xl text-sm flex items-center gap-3 transition-all duration-200 group border ${
-                    selected?.id === c.id
+            <div className="flex items-center justify-between mb-3 px-2">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t("clients")}</h3>
+              <span className="text-xs text-gray-600">{filteredClients.length}/{clients.length}</span>
+            </div>
+
+            {/* Csoport létrehozása */}
+            <form
+              className="flex gap-2 mb-4"
+              onSubmit={(event) => { event.preventDefault(); void createGroup(); }}
+            >
+              <input
+                value={newGroupName}
+                onChange={(event) => setNewGroupName(event.target.value)}
+                maxLength={80}
+                placeholder={t("newGroupPlaceholder")}
+                className="min-w-0 flex-1 bg-[#1a1a1a] border border-[#303030] rounded-lg px-3 py-2 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500/60"
+              />
+              <button
+                type="submit"
+                disabled={!newGroupName.trim() || groupBusy}
+                title={t("createGroup")}
+                className="shrink-0 px-3 rounded-lg bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold"
+              >
+                +
+              </button>
+            </form>
+
+            {/* Csoport szűrők */}
+            <div className="space-y-1 mb-4">
+              <button
+                onClick={() => setActiveGroupFilter("all")}
+                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs transition-colors ${
+                  activeGroupFilter === "all" ? "bg-red-600/15 border border-red-500/30 text-red-300" : "border border-transparent text-gray-400 hover:bg-[#1a1a1a]"
+                }`}
+              >
+                <span>{t("allClients")}</span>
+                <span>{clients.length}</span>
+              </button>
+              <button
+                onClick={() => setActiveGroupFilter("ungrouped")}
+                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs transition-colors ${
+                  activeGroupFilter === "ungrouped" ? "bg-red-600/15 border border-red-500/30 text-red-300" : "border border-transparent text-gray-400 hover:bg-[#1a1a1a]"
+                }`}
+              >
+                <span>{t("ungroupedClients")}</span>
+                <span>{clients.filter((client) => !memberships[client.id]).length}</span>
+              </button>
+
+              {groups.map((group) => {
+                const count = clients.filter((client) => memberships[client.id] === group.id).length;
+                const isEditing = editingGroupId === group.id;
+                return (
+                  <div key={group.id} className={`rounded-lg border ${
+                    activeGroupFilter === group.id ? "bg-red-600/10 border-red-500/30" : "border-transparent hover:bg-[#1a1a1a]"
+                  }`}>
+                    <div className="flex items-center gap-1 px-2 py-1">
+                      {isEditing ? (
+                        <>
+                          <input
+                            autoFocus
+                            value={editingGroupName}
+                            onChange={(event) => setEditingGroupName(event.target.value)}
+                            maxLength={80}
+                            className="min-w-0 flex-1 bg-[#090909] border border-[#3a3a3a] rounded px-2 py-1 text-xs text-white"
+                          />
+                          <button onClick={() => void saveGroupName(group.id)} disabled={!editingGroupName.trim() || groupBusy} className="text-green-400 text-xs px-1" title={t("save")}>✓</button>
+                          <button onClick={() => { setEditingGroupId(null); setEditingGroupName(""); }} className="text-gray-500 text-xs px-1" title={t("cancel")}>×</button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setActiveGroupFilter(group.id)}
+                            className={`min-w-0 flex-1 flex items-center justify-between text-left text-xs py-1 ${
+                              activeGroupFilter === group.id ? "text-red-300" : "text-gray-300"
+                            }`}
+                          >
+                            <span className="truncate">{group.name}</span>
+                            <span className="ml-2 text-gray-600">{count}</span>
+                          </button>
+                          <button
+                            onClick={() => { setEditingGroupId(group.id); setEditingGroupName(group.name); setConfirmDeleteGroupId(null); }}
+                            className="px-1 text-gray-600 hover:text-white text-xs"
+                            title={t("renameGroup")}
+                          >✎</button>
+                          <button
+                            onClick={() => setConfirmDeleteGroupId(confirmDeleteGroupId === group.id ? null : group.id)}
+                            className="px-1 text-gray-600 hover:text-red-400 text-xs"
+                            title={t("deleteGroup")}
+                          >×</button>
+                        </>
+                      )}
+                    </div>
+                    {confirmDeleteGroupId === group.id && (
+                      <div className="px-3 pb-2 flex items-center justify-between gap-2">
+                        <span className="text-[10px] text-red-300">{t("confirmDeleteGroup")}</span>
+                        <div className="flex gap-2 shrink-0">
+                          <button onClick={() => void deleteGroup(group.id)} disabled={groupBusy} className="text-[10px] font-bold text-red-400">{t("delete")}</button>
+                          <button onClick={() => setConfirmDeleteGroupId(null)} className="text-[10px] text-gray-500">{t("cancel")}</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-white/5 pt-3 overflow-y-auto space-y-2 pr-1 custom-scrollbar flex-1">
+              {filteredClients.length === 0 ? (
+                <div className="text-xs text-gray-600 text-center py-6">{t("noClientsInGroup")}</div>
+              ) : filteredClients.map((client) => (
+                <button
+                  key={client.id}
+                  type="button"
+                  onClick={() => void loadClientState(client)}
+                  className={`w-full text-left cursor-pointer px-3 py-3 rounded-xl text-sm flex items-center gap-3 transition-all duration-200 group border ${
+                    selected?.id === client.id
                       ? "bg-gradient-to-r from-red-900/40 to-red-800/10 border-red-500/30 text-white shadow-[0_0_15px_rgba(220,38,38,0.1)]"
                       : "bg-[#1a1a1a] border-transparent hover:bg-[#222] hover:border-white/5 text-gray-400 hover:text-gray-200"
                   }`}
                 >
-                   <div className={`p-1.5 rounded-full ${selected?.id === c.id ? "bg-red-600" : "bg-[#252525] group-hover:bg-[#333]"}`}>
-                      <UserIcon />
-                   </div>
-                   <span className="truncate font-medium">{c.email || t("unknownId")}</span>
-                </div>
+                  <div className={`p-1.5 rounded-full ${selected?.id === client.id ? "bg-red-600" : "bg-[#252525] group-hover:bg-[#333]"}`}>
+                    <UserIcon />
+                  </div>
+                  <span className="min-w-0 flex-1 truncate font-medium">{client.full_name || client.email || t("unknownId")}</span>
+                </button>
               ))}
             </div>
           </div>
@@ -241,15 +619,29 @@ export default function CoachDashboard() {
               </div>
             ) : (
               <>
-                {/* Selected Client Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
+                {/* Kiválasztott kliens és csoport-hozzárendelés */}
+                <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 mb-6">
+                  <div className="min-w-0">
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                       {selected.email}
+                      {selected.full_name || selected.email || t("unknownId")}
                     </h3>
+                    {selected.full_name && <p className="text-xs text-gray-500 mt-1">{selected.email}</p>}
                     <p className="text-xs text-gray-400 mt-1">{t("statsOverview")}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <label htmlFor="client-group" className="text-xs text-gray-500">{t("assignToGroup")}</label>
+                      <select
+                        id="client-group"
+                        value={memberships[selected.id] || ""}
+                        onChange={(event) => void assignClientToGroup(selected.id, event.target.value)}
+                        disabled={groupBusy}
+                        className="max-w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-red-500/50 disabled:opacity-50"
+                      >
+                        <option value="">{t("ungroupedClients")}</option>
+                        {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+                      </select>
+                    </div>
                   </div>
-                  <div className="bg-[#1a1a1a] border border-white/5 px-4 py-2 rounded-lg text-right">
+                  <div className="bg-[#1a1a1a] border border-white/5 px-4 py-2 rounded-lg text-right shrink-0">
                     <div className="text-xs text-gray-500 uppercase">{t("completionRate")}</div>
                     <div className="text-lg font-bold text-white">
                       <span className="text-red-500">{totalFilled.filled}</span> / {totalFilled.total} {t("days")}
@@ -259,6 +651,78 @@ export default function CoachDashboard() {
 
                 {appState && (
                   <div className="space-y-8 animate-in fade-in duration-500">
+                    {/* TELJES MINDSET ÁTTEKINTÉS */}
+                    <section className="bg-[#0d0d0d] border border-red-900/20 rounded-2xl p-4 md:p-5 space-y-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h4 className="text-sm font-bold uppercase tracking-wider text-white">{t("mindsetOverview")}</h4>
+                          <p className="text-xs text-gray-500 mt-1">{t("mindsetOverviewDesc")}</p>
+                        </div>
+                        <span className="text-xs font-bold text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-1.5">
+                          {mindsetStats.completed}/{mindsetStats.planned} {t("mindsetCompleted")}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div className="bg-[#171717] rounded-xl p-3">
+                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetCompleted")}</div>
+                          <div className="text-2xl font-bold text-green-400 mt-1">{mindsetStats.completed}</div>
+                        </div>
+                        <div className="bg-[#171717] rounded-xl p-3">
+                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetNotCompleted")}</div>
+                          <div className="text-2xl font-bold text-gray-300 mt-1">{mindsetStats.notCompleted}</div>
+                        </div>
+                        <div className="bg-[#171717] rounded-xl p-3">
+                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetPending")}</div>
+                          <div className="text-2xl font-bold text-yellow-400 mt-1">{mindsetStats.pending}</div>
+                        </div>
+                        <div className="bg-[#171717] rounded-xl p-3">
+                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetRecorded")}</div>
+                          <div className="text-2xl font-bold text-white mt-1">{mindsetStats.recorded}/{mindsetStats.planned}</div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                        <div>
+                          <h5 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">{t("mindsetByExercise")}</h5>
+                          <div className="space-y-2">
+                            {(Object.keys(MINDSET_EXERCISE_CATALOG) as MindsetExerciseId[]).map((id) => {
+                              const stats = mindsetStats.byExercise[id];
+                              return (
+                                <div key={id} className="flex items-center justify-between gap-3 border-b border-white/5 pb-2 text-xs">
+                                  <span className="text-gray-300">{t(MINDSET_EXERCISE_CATALOG[id].nameKey)}</span>
+                                  <span className="shrink-0 text-right">
+                                    <span className="font-bold text-green-400">{stats.completed}</span>
+                                    <span className="text-gray-600"> / {stats.planned}</span>
+                                    <span className="text-gray-600 ml-2">({t("mindsetNotCompletedShort")}: {stats.notCompleted}, {t("mindsetPendingShort")}: {stats.planned - stats.recorded})</span>
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <h5 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">{t("mindsetByWeek")}</h5>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-2 gap-2">
+                            {mindsetStats.byWeek.map((week) => (
+                              <button
+                                key={week.weekNumber}
+                                type="button"
+                                onClick={() => {
+                                  const target = weeks.find((item) => item.weekNumber === week.weekNumber);
+                                  if (target) selectWeek(target);
+                                }}
+                                className="text-left bg-[#171717] hover:bg-[#202020] border border-white/5 rounded-lg p-3 transition-colors"
+                              >
+                                <div className="text-[10px] uppercase text-gray-500">{language === "hu" ? `${week.weekNumber}. hét` : `${t("week")} ${week.weekNumber}`}</div>
+                                <div className="text-lg font-bold text-white mt-1"><span className="text-green-400">{week.completed}</span><span className="text-gray-600 text-xs"> / {week.planned}</span></div>
+                                <div className="text-[10px] text-gray-600 mt-1">{t("mindsetRecorded")}: {week.recorded} · {t("mindsetPendingShort")}: {week.pending}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
                     
                     {/* HETEK GRID */}
                     <div>
@@ -303,6 +767,7 @@ export default function CoachDashboard() {
                           {(selectedWeek.days as any[]).map((d) => {
                             const active = (selectedDay as any)?.id === d.id;
                             const filled = isDayFilled(d as any);
+                            const mindsetProgress = getDayMindsetProgress(d as any, selectedWeek.weekNumber);
                             return (
                               <button
                                 key={d.id}
@@ -314,7 +779,10 @@ export default function CoachDashboard() {
                                 }`}
                               >
                                 <span className="font-medium">{d.dayName ? translateDay(d.dayName) : d.id}</span>
-                                <div className={`h-2.5 w-2.5 rounded-full ${filled ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-700"}`} />
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[10px] text-gray-500">{t("mindsetColumn")}: <span className="text-green-400">{mindsetProgress.completed}</span>/{mindsetProgress.total}</span>
+                                  <div className={`h-2.5 w-2.5 rounded-full ${filled ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-700"}`} />
+                                </div>
                               </button>
                             );
                           })}
@@ -404,6 +872,44 @@ export default function CoachDashboard() {
                     );
                   })()}
                 </div>
+
+                {/* Mindset gyakorlatok – az adott hét rendje szerint */}
+                {selectedWeek && MINDSET_WEEK_PLAN[selectedWeek.weekNumber] && (() => {
+                  const plan = MINDSET_WEEK_PLAN[selectedWeek.weekNumber];
+                  const exercises = [
+                    ...plan.required.map((id) => ({ ...MINDSET_EXERCISE_CATALOG[id], required: true })),
+                    ...plan.optional.map((id) => ({ ...MINDSET_EXERCISE_CATALOG[id], required: false })),
+                  ];
+                  return (
+                    <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4">
+                      <div className="font-bold text-white text-sm mb-3 border-b border-white/5 pb-2">{t("mindsetDailyTitle")}</div>
+                      <div className="space-y-3">
+                        {exercises.map((exercise) => {
+                          const value = selectedDay.mindset?.[exercise.id];
+                          return (
+                            <div key={exercise.id} className="flex items-center justify-between gap-3 text-sm">
+                              <div className="min-w-0">
+                                <div className={exercise.required ? "font-bold text-white" : "text-gray-300"}>{t(exercise.nameKey)}</div>
+                                <div className={`text-[10px] uppercase tracking-wide mt-0.5 ${exercise.required ? "text-red-400" : "text-gray-600"}`}>
+                                  {exercise.required ? t("mindsetRequired") : t("mindsetOptional")}
+                                </div>
+                              </div>
+                              <span className={`shrink-0 text-[10px] font-bold px-2 py-1 rounded border ${
+                                value === true
+                                  ? "text-green-400 border-green-500/30 bg-green-500/10"
+                                  : value === false
+                                    ? "text-gray-400 border-white/10 bg-white/5"
+                                    : "text-yellow-500 border-yellow-500/20 bg-yellow-500/5"
+                              }`}>
+                                {value === true ? t("mindsetYes") : value === false ? t("mindsetNo") : t("mindsetNotRecorded")}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Megjegyzés */}
                 <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4">
