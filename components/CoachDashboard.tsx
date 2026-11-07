@@ -651,79 +651,95 @@ export default function CoachDashboard() {
 
                 {appState && (
                   <div className="space-y-8 animate-in fade-in duration-500">
-                    {/* TELJES MINDSET ÁTTEKINTÉS */}
-                    <section className="bg-[#0d0d0d] border border-red-900/20 rounded-2xl p-4 md:p-5 space-y-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <h4 className="text-sm font-bold uppercase tracking-wider text-white">{t("mindsetOverview")}</h4>
-                          <p className="text-xs text-gray-500 mt-1">{t("mindsetOverviewDesc")}</p>
-                        </div>
-                        <span className="text-xs font-bold text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-1.5">
-                          {mindsetStats.completed}/{mindsetStats.planned} {t("mindsetCompleted")}
-                        </span>
-                      </div>
+                    {/* TELJES MINDSET ÁTTEKINTÉS – lenyitható, teljes szélességű összesítőkkel */}
+                    <section className="bg-[#0d0d0d] border border-red-900/20 rounded-2xl p-4 md:p-5">
+                      <details open className="group">
+                        <summary className="flex cursor-pointer list-none items-start justify-between gap-3 select-none">
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-bold uppercase tracking-wider text-white">{t("mindsetOverview")}</h4>
+                            <p className="text-xs text-gray-500 mt-1">{t("mindsetOverviewDesc")}</p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className="text-xs font-bold text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-1.5 whitespace-nowrap">
+                              {mindsetStats.completed}/{mindsetStats.planned} {t("mindsetCompleted")}
+                            </span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.09 1.032l-4.255 4.516a.75.75 0 01-1.09 0L5.21 8.27a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </summary>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <div className="bg-[#171717] rounded-xl p-3">
-                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetCompleted")}</div>
-                          <div className="text-2xl font-bold text-green-400 mt-1">{mindsetStats.completed}</div>
-                        </div>
-                        <div className="bg-[#171717] rounded-xl p-3">
-                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetNotCompleted")}</div>
-                          <div className="text-2xl font-bold text-gray-300 mt-1">{mindsetStats.notCompleted}</div>
-                        </div>
-                        <div className="bg-[#171717] rounded-xl p-3">
-                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetPending")}</div>
-                          <div className="text-2xl font-bold text-yellow-400 mt-1">{mindsetStats.pending}</div>
-                        </div>
-                        <div className="bg-[#171717] rounded-xl p-3">
-                          <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetRecorded")}</div>
-                          <div className="text-2xl font-bold text-white mt-1">{mindsetStats.recorded}/{mindsetStats.planned}</div>
-                        </div>
-                      </div>
+                        <div className="pt-5 space-y-6">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div className="bg-[#171717] rounded-xl p-3 min-w-0">
+                              <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetCompleted")}</div>
+                              <div className="text-2xl font-bold text-green-400 mt-1">{mindsetStats.completed}</div>
+                            </div>
+                            <div className="bg-[#171717] rounded-xl p-3 min-w-0">
+                              <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetNotCompleted")}</div>
+                              <div className="text-2xl font-bold text-gray-300 mt-1">{mindsetStats.notCompleted}</div>
+                            </div>
+                            <div className="bg-[#171717] rounded-xl p-3 min-w-0">
+                              <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetPending")}</div>
+                              <div className="text-2xl font-bold text-yellow-400 mt-1">{mindsetStats.pending}</div>
+                            </div>
+                            <div className="bg-[#171717] rounded-xl p-3 min-w-0">
+                              <div className="text-[10px] uppercase tracking-wide text-gray-500">{t("mindsetRecorded")}</div>
+                              <div className="text-2xl font-bold text-white mt-1">{mindsetStats.recorded}/{mindsetStats.planned}</div>
+                            </div>
+                          </div>
 
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                        <div>
-                          <h5 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">{t("mindsetByExercise")}</h5>
-                          <div className="space-y-2">
-                            {(Object.keys(MINDSET_EXERCISE_CATALOG) as MindsetExerciseId[]).map((id) => {
-                              const stats = mindsetStats.byExercise[id];
-                              return (
-                                <div key={id} className="flex items-center justify-between gap-3 border-b border-white/5 pb-2 text-xs">
-                                  <span className="text-gray-300">{t(MINDSET_EXERCISE_CATALOG[id].nameKey)}</span>
-                                  <span className="shrink-0 text-right">
-                                    <span className="font-bold text-green-400">{stats.completed}</span>
-                                    <span className="text-gray-600"> / {stats.planned}</span>
-                                    <span className="text-gray-600 ml-2">({t("mindsetNotCompletedShort")}: {stats.notCompleted}, {t("mindsetPendingShort")}: {stats.planned - stats.recorded})</span>
-                                  </span>
-                                </div>
-                              );
-                            })}
+                          {/* A két összesítés egymás alatt, teljes szélességben jelenik meg. */}
+                          <div className="space-y-6">
+                            <div className="w-full min-w-0">
+                              <h5 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">{t("mindsetByExercise")}</h5>
+                              <div className="space-y-2">
+                                {(Object.keys(MINDSET_EXERCISE_CATALOG) as MindsetExerciseId[]).map((id) => {
+                                  const stats = mindsetStats.byExercise[id];
+                                  return (
+                                    <div key={id} className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:items-center gap-1 sm:gap-4 border-b border-white/5 pb-2 text-xs">
+                                      <span className="min-w-0 text-gray-300 break-words">{t(MINDSET_EXERCISE_CATALOG[id].nameKey)}</span>
+                                      <span className="min-w-0 text-left sm:text-right leading-relaxed break-words">
+                                        <span className="font-bold text-green-400">{stats.completed}</span>
+                                        <span className="text-gray-600"> / {stats.planned}</span>
+                                        <span className="text-gray-500 ml-2">({t("mindsetNotCompletedShort")}: {stats.notCompleted}, {t("mindsetPendingShort")}: {stats.planned - stats.recorded})</span>
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div className="w-full min-w-0">
+                              <h5 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">{t("mindsetByWeek")}</h5>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {mindsetStats.byWeek.map((week) => (
+                                  <button
+                                    key={week.weekNumber}
+                                    type="button"
+                                    onClick={() => {
+                                      const target = weeks.find((item) => item.weekNumber === week.weekNumber);
+                                      if (target) selectWeek(target);
+                                    }}
+                                    className="min-w-0 text-left bg-[#171717] hover:bg-[#202020] border border-white/5 rounded-lg p-3 transition-colors"
+                                  >
+                                    <div className="text-[10px] uppercase text-gray-500">{language === "hu" ? `${week.weekNumber}. hét` : `${t("week")} ${week.weekNumber}`}</div>
+                                    <div className="text-lg font-bold text-white mt-1"><span className="text-green-400">{week.completed}</span><span className="text-gray-600 text-xs"> / {week.planned}</span></div>
+                                    <div className="text-[10px] text-gray-500 mt-1 leading-relaxed">{t("mindsetRecorded")}: {week.recorded} · {t("mindsetPendingShort")}: {week.pending}</div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <h5 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">{t("mindsetByWeek")}</h5>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-2 gap-2">
-                            {mindsetStats.byWeek.map((week) => (
-                              <button
-                                key={week.weekNumber}
-                                type="button"
-                                onClick={() => {
-                                  const target = weeks.find((item) => item.weekNumber === week.weekNumber);
-                                  if (target) selectWeek(target);
-                                }}
-                                className="text-left bg-[#171717] hover:bg-[#202020] border border-white/5 rounded-lg p-3 transition-colors"
-                              >
-                                <div className="text-[10px] uppercase text-gray-500">{language === "hu" ? `${week.weekNumber}. hét` : `${t("week")} ${week.weekNumber}`}</div>
-                                <div className="text-lg font-bold text-white mt-1"><span className="text-green-400">{week.completed}</span><span className="text-gray-600 text-xs"> / {week.planned}</span></div>
-                                <div className="text-[10px] text-gray-600 mt-1">{t("mindsetRecorded")}: {week.recorded} · {t("mindsetPendingShort")}: {week.pending}</div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                      </details>
                     </section>
-                    
                     {/* HETEK GRID */}
                     <div>
                       <h4 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">{t("weeksTitle")}</h4>
