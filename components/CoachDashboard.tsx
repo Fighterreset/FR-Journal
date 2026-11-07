@@ -653,7 +653,7 @@ export default function CoachDashboard() {
                   <div className="space-y-8 animate-in fade-in duration-500">
                     {/* TELJES MINDSET ÁTTEKINTÉS – lenyitható, teljes szélességű összesítőkkel */}
                     <section className="bg-[#0d0d0d] border border-red-900/20 rounded-2xl p-4 md:p-5">
-                      <details open className="group">
+                      <details className="group">
                         <summary className="flex cursor-pointer list-none items-start justify-between gap-3 select-none">
                           <div className="min-w-0">
                             <h4 className="text-sm font-bold uppercase tracking-wider text-white">{t("mindsetOverview")}</h4>
