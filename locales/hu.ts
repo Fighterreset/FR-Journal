@@ -25,6 +25,10 @@ const hu = {
   // Belépés (Auth)
   subtitle: "Önellenőrzési napló",
   emailPlaceholder: "Email cím",
+  usernamePlaceholder: "Felhasználónév",
+  usernameLoginError: "Hibás felhasználónév vagy jelszó.",
+  usernameLoginRateLimited: "Túl sok sikertelen próbálkozás. Kérjük, várj 15 percet, majd próbáld újra.",
+  usernameLoginServiceError: "A bejelentkezési szolgáltatás átmenetileg nem érhető el. Próbáld újra később.",
   passwordPlaceholder: "Jelszó",
   loginButton: "BELÉPÉS",
   noAccount: "Nincs fiókod? Kérj hozzáférést az edződtől.",

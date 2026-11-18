@@ -25,6 +25,10 @@ const en = {
   // Belépés (Auth)
   subtitle: "Self-Check Journal",
   emailPlaceholder: "Email address",
+  usernamePlaceholder: "Username",
+  usernameLoginError: "Invalid username or password.",
+  usernameLoginRateLimited: "Too many attempts. Please wait 15 minutes and try again.",
+  usernameLoginServiceError: "The login service is temporarily unavailable. Please try again later.",
   passwordPlaceholder: "Password",
   loginButton: "LOGIN",
   noAccount: "Don't have an account? Ask your coach for access.",
