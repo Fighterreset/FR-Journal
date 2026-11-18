@@ -1,0 +1,4 @@
+# Fighter Reset Journal – Supabase Functions configuration.
+# The username-login endpoint keeps the platform JWT/API-key verification enabled.
+[functions.login-with-username]
+verify_jwt = true
