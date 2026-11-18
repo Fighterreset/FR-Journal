@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useLanguage } from "../context/LanguageContext";
 
 // Ikonok komponensként (hogy ne kelljen külső libet telepíteni)
-const MailIcon = () => (
+const UserIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 21a8 8 0 00-16 0m8-10a5 5 0 100-10 5 5 0 000 10z" />
   </svg>
 );
 
@@ -15,7 +16,8 @@ const LockIcon = () => (
 );
 
 export default function AuthPage() {
-  const [email, setEmail] = useState("");
+  const { t } = useLanguage();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false); // Új state a töltés jelzéséhez
@@ -25,10 +27,41 @@ export default function AuthPage() {
     setMsg("");
     setLoading(true); // Töltés indítása
     
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    setLoading(false); // Töltés vége
-    setMsg(error ? error.message : "Sikeres belépés!");
+    try {
+      const projectApiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!projectApiKey) {
+        throw new Error("A bejelentkezési szolgáltatás konfigurációja hiányos.");
+      }
+
+      const { data, error } = await supabase.functions.invoke("login-with-username", {
+        // A publikus projektkulcsot a gateway ellenőrzi. A Verify JWT beállítás
+        // bekapcsolva marad; a felhasználó személyazonosságát az Auth jelszóellenőrzése igazolja.
+        headers: { Authorization: `Bearer ${projectApiKey}` },
+        body: { username: username.trim().toLowerCase(), password },
+      });
+
+      if (error || !data?.session?.access_token || !data?.session?.refresh_token) {
+        const status = (error as any)?.context?.status;
+        if (status === 429) {
+          throw new Error(t("usernameLoginRateLimited"));
+        }
+        if (status >= 500) {
+          throw new Error(t("usernameLoginServiceError"));
+        }
+        throw new Error(t("usernameLoginError"));
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+      if (sessionError) throw sessionError;
+      setMsg(t("loginSuccess"));
+    } catch (error: any) {
+      setMsg(error?.message || t("usernameLoginServiceError"));
+    } finally {
+      setLoading(false); // Töltés vége
+    }
   };
 
   return (
@@ -63,19 +96,20 @@ export default function AuthPage() {
         {/* --- Form --- */}
         <form onSubmit={login} className="space-y-5">
           
-          {/* Email Mező */}
+          {/* Felhasználónév mező */}
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 group-focus-within:text-red-500 transition-colors">
-              <MailIcon />
+              <UserIcon />
             </div>
             <input
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#0a0a0a] border border-[#2a2a2a] text-gray-100 placeholder-gray-600 
               focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all duration-200"
-              placeholder="Email cím"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("usernamePlaceholder")}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              type="email"
+              type="text"
+              required
             />
           </div>
 
@@ -92,12 +126,13 @@ export default function AuthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              required
             />
           </div>
 
           {/* Hibaüzenet (dinamikus megjelenés) */}
           {msg && (
-            <div className={`text-center text-xs p-2 rounded border ${msg === "Sikeres belépés!" ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+            <div className={`text-center text-xs p-2 rounded border ${msg === t("loginSuccess") ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
               {msg}
             </div>
           )}
@@ -117,7 +152,7 @@ export default function AuthPage() {
                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                </svg>
             ) : (
-              "BELÉPÉS"
+              t("loginButton")
             )}
           </button>
 

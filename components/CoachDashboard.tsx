@@ -26,6 +26,7 @@ type Client = {
   id: string;
   email: string | null;
   full_name: string | null;
+  username: string | null;
 };
 
 type ClientGroup = {
@@ -290,7 +291,7 @@ export default function CoachDashboard() {
         const [profilesResult, groupsResult, membersResult] = await Promise.all([
           supabase
             .from("profiles")
-            .select("id,email,full_name")
+            .select("id,email,full_name,username")
             .neq("role", "admin")
             .order("created_at", { ascending: false }),
           supabase
@@ -699,7 +700,7 @@ export default function CoachDashboard() {
                   <div className={`p-1.5 rounded-full ${selected?.id === client.id ? "bg-red-600" : "bg-[#252525] group-hover:bg-[#333]"}`}>
                     <UserIcon />
                   </div>
-                  <span className="min-w-0 flex-1 truncate font-medium">{client.full_name || client.email || t("unknownId")}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">{client.username || client.full_name || client.email || t("unknownId")}</span>
                 </button>
               ))}
             </div>
@@ -800,7 +801,7 @@ export default function CoachDashboard() {
                                     className="w-full text-left bg-[#1a1a1a] hover:bg-[#222] border border-white/5 rounded-xl p-3 flex items-center justify-between gap-3"
                                   >
                                     <span className="min-w-0">
-                                      <span className="block text-sm text-white font-medium truncate">{row.client.full_name || row.client.email || t("unknownId")}</span>
+                                      <span className="block text-sm text-white font-medium truncate">{row.client.username || row.client.full_name || row.client.email || t("unknownId")}</span>
                                       <span className="block text-[10px] text-gray-500 mt-1">{row.state ? t("journalAvailable") : t("noSavedData")}</span>
                                     </span>
                                     <span className="shrink-0 text-right">
@@ -829,9 +830,9 @@ export default function CoachDashboard() {
                 <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 mb-6">
                   <div className="min-w-0">
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                      {selected.full_name || selected.email || t("unknownId")}
+                      {selected.username || selected.full_name || selected.email || t("unknownId")}
                     </h3>
-                    {selected.full_name && <p className="text-xs text-gray-500 mt-1">{selected.email}</p>}
+                    {selected.email && <p className="text-xs text-gray-500 mt-1">{selected.full_name ? `${selected.full_name} · ${selected.email}` : selected.email}</p>}
                     <p className="text-xs text-gray-400 mt-1">{t("statsOverview")}</p>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <label htmlFor="client-group" className="text-xs text-gray-500">{t("assignToGroup")}</label>

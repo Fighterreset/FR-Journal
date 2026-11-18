@@ -11,6 +11,7 @@ import { supabase } from "../lib/supabase";
 import CoachDashboard from "./CoachDashboard";
 import { useLanguage } from "../context/LanguageContext";
 import ChangePassword from "./ChangePassword";
+import ProfileSettings from "./ProfileSettings";
 
 // --- IKONOK (SVG) ---
 const DownloadIcon = () => (
@@ -49,6 +50,7 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
   
   // Új state a jelszócserélő lenyílásához
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const saveTimer = useRef<number | null>(null);
@@ -358,6 +360,13 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
                         </button>
 
                         <button
+                          onClick={() => setShowProfileSettings(!showProfileSettings)}
+                          className={`px-4 py-2 ${showProfileSettings ? 'bg-red-900/40 text-red-400 border-red-900/50' : 'bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white border-white/5 hover:border-white/10'} text-sm font-bold rounded-xl transition-all border flex items-center gap-2`}
+                        >
+                          <span aria-hidden="true">@</span> {language === "hu" ? "Felhasználónév" : "Username"}
+                        </button>
+
+                        <button
                           onClick={() => setShowPasswordChange(!showPasswordChange)}
                           className={`px-4 py-2 ${showPasswordChange ? 'bg-red-900/40 text-red-400 border-red-900/50' : 'bg-[#1a1a1a] hover:bg-[#252525] text-gray-400 hover:text-white border-white/5 hover:border-white/10'} text-sm font-bold rounded-xl transition-all border flex items-center gap-2`}
                         >
@@ -373,6 +382,13 @@ const OriginalApp: React.FC<Props> = ({ userId }) => {
                       </div>
                     </div>
                   </div>
+
+                  {/* FELHASZNÁLÓNÉV BEÁLLÍTÁSA */}
+                  {showProfileSettings && (
+                    <div className="animate-in slide-in-from-top-4 fade-in duration-300 ease-out">
+                      <ProfileSettings userId={userId} />
+                    </div>
+                  )}
 
                   {/* JELSZÓCSERÉLŐ ŰRLAP (Feltételes megjelenítés) */}
                   {showPasswordChange && (
